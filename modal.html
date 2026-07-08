@@ -8,6 +8,9 @@
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lato:wght@400;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -26,14 +29,14 @@
 
         .app-container {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1500px;
             background: #ffffff;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
             overflow: hidden;
+            position: relative;
         }
 
-        /* NAV TABS */
         .app-header {
             background: linear-gradient(135deg, #004a80 0%, #002b4d 100%);
             padding: 15px 30px;
@@ -78,63 +81,297 @@
             display: block;
         }
 
-        /* FILTROS */
         .filter-bar {
             display: flex;
+            flex-wrap: wrap;
             gap: 15px;
             margin-bottom: 25px;
             background: #f8fafc;
             padding: 15px;
             border-radius: 10px;
             border: 1px solid #e2e8f0;
+            align-items: flex-end;
         }
 
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 130px;
+        }
+
+        .filter-group label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            font-family: 'Poppins';
+        }
+
+        .filter-bar input,
         .filter-bar select {
-            padding: 8px 12px;
+            padding: 8px;
             border-radius: 6px;
             border: 1px solid #cbd5e1;
-            flex: 1;
             font-family: 'Lato';
+            font-size: 13px;
+            width: 100%;
         }
 
-        /* GRID DASHBOARD */
+        .btn-clear {
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            height: 36px;
+        }
+
+        .btn-clear:hover {
+            background: #cbd5e1;
+        }
+
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
         }
 
         .kpi-card {
             background: white;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             display: flex;
-            align-items: center;
-            gap: 15px;
-            border-left: 5px solid #004a80;
+            flex-direction: column;
+            justify-content: center;
+            border-bottom: 4px solid #cbd5e1;
+        }
+
+        .kpi-card.clickable-kpi {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .kpi-card.clickable-kpi:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .kpi-card.totales {
+            border-color: #3b82f6;
+        }
+
+        .kpi-card.completadosTotales {
+            border-color: #0ea5e9;
+        }
+
+        .kpi-card.atiempo {
+            border-color: #86bc25;
+        }
+
+        .kpi-card.atrasados {
+            border-color: #ef4444;
+        }
+
+        .kpi-card.proceso {
+            border-color: #f59e0b;
         }
 
         .kpi-card.otd {
-            border-left-color: #86bc25;
+            border-color: #8b5cf6;
+        }
+
+        .kpi-card.conv {
+            border-color: #004a80;
+        }
+
+        .kpi-title {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-family: 'Poppins';
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .kpi-val {
             font-family: 'Poppins';
-            font-size: 32px;
+            font-size: 26px;
             font-weight: 700;
             color: #0f172a;
+            margin-top: 5px;
+            line-height: 1.1;
         }
 
-        /* TABLA DE AUDITORÍA */
+        .charts-grid-top {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .charts-grid-bottom {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 300px;
+        }
+
+        .chart-card h4 {
+            font-size: 13px;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            font-family: 'Poppins';
+        }
+
+        .chart-hint {
+            font-size: 11px;
+            color: #94a3b8;
+            font-style: italic;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            min-height: 0;
+            cursor: pointer;
+        }
+
+        .action-banner {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            background: #e0f2fe;
+            border: 1px solid #bae6fd;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .action-banner-text {
+            font-family: 'Poppins';
+            font-size: 14px;
+            color: #0369a1;
+            font-weight: 500;
+        }
+
+        .btn-ver-pedidos {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-family: 'Poppins';
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-ver-pedidos:hover {
+            background: #0369a1;
+        }
+
+        .active-filters-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+            align-items: center;
+        }
+
+        .filter-chip {
+            background: #004a80;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-family: 'Poppins';
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .filter-chip:hover {
+            opacity: 0.8;
+        }
+
+        .btn-clear-chips {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-family: 'Poppins';
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-clear-chips:hover {
+            background: #fee2e2;
+        }
+
+        .historial-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-pedido {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            width: 350px;
+            font-family: 'Lato';
+            font-size: 14px;
+        }
+
         .table-wrapper {
             overflow-x: auto;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
-            margin-top: 20px;
-            max-height: 300px;
+            max-height: 600px;
             overflow-y: auto;
+            background: white;
         }
 
         table {
@@ -146,22 +383,32 @@
 
         th {
             background: #f8fafc;
-            padding: 12px;
+            padding: 15px;
             font-family: 'Poppins';
             font-weight: 600;
             color: #475569;
             border-bottom: 2px solid #e2e8f0;
             position: sticky;
             top: 0;
+            z-index: 1;
         }
 
         td {
-            padding: 12px;
+            padding: 12px 15px;
             border-bottom: 1px solid #e2e8f0;
         }
 
+        tbody tr {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+
         .badge {
-            padding: 3px 8px;
+            padding: 5px 12px;
             border-radius: 12px;
             font-size: 11px;
             font-weight: bold;
@@ -177,22 +424,36 @@
             color: #86bc25;
         }
 
-        /* FORMULARIO */
+        .badge.transito {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .badge.completado {
+            background: #e0e7ff;
+            color: #0284c7;
+        }
+
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
+            transition: 0.3s opacity;
         }
 
         .form-group label {
             font-family: 'Poppins';
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             color: #475569;
         }
@@ -202,11 +463,21 @@
             padding: 10px;
             border-radius: 6px;
             border: 1px solid #cbd5e1;
-            font-size: 14px;
+            font-size: 13px;
+            width: 100%;
+            font-family: 'Lato';
+        }
+
+        .form-group input:disabled,
+        .form-group select:disabled {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+            border-color: #e2e8f0;
         }
 
         .btn-submit {
-            grid-column: span 3;
+            grid-column: 1 / -1;
             background: #86bc25;
             color: white;
             border: none;
@@ -216,70 +487,435 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 15px;
+            margin-top: 10px;
             transition: 0.2s;
         }
 
         .btn-submit:hover {
-            background: #73a41f;
+            background: #65a30d;
+        }
+
+        .btn-cancelar {
+            display: none;
+            grid-column: 1 / -1;
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            padding: 12px;
+            font-family: 'Poppins';
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        #drawerOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            z-index: 999;
+            backdrop-filter: blur(2px);
+            transition: opacity 0.3s;
+        }
+
+        .drawer-content {
+            position: absolute;
+            top: 0;
+            right: -450px;
+            width: 450px;
+            height: 100%;
+            background: white;
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            transition: right 0.3s ease-in-out;
+            overflow-y: auto;
+        }
+
+        .drawer-content.open {
+            right: 0;
+        }
+
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .drawer-header h3 {
+            font-family: 'Poppins';
+            font-size: 18px;
+            color: #004a80;
+        }
+
+        .close-drawer {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .drawer-body p {
+            margin-bottom: 12px;
+            font-size: 13px;
+            border-bottom: 1px dashed #f1f5f9;
+            padding-bottom: 5px;
+        }
+
+        .drawer-body strong {
+            color: #475569;
+            display: inline-block;
+            width: 140px;
+        }
+
+        .drawer-footer {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-editar {
+            flex: 1;
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Poppins';
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Estilos para el Toast Personalizado */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: #ffffff;
+            border-left: 5px solid #86bc25;
+            /* Color por defecto (éxito) */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 300px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+
+        .toast.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .toast.info {
+            border-left-color: #3b82f6;
+        }
+
+        .toast i {
+            font-size: 18px;
+        }
+
+        .toast.success i {
+            color: #86bc25;
+        }
+
+        .toast.error i {
+            color: #ef4444;
+        }
+
+        .toast.warning i {
+            color: #f59e0b;
+        }
+
+        .toast.info i {
+            color: #3b82f6;
+        }
+
+        /* Estilos para Modal de Confirmación Personalizado */
+        #confirmOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .confirm-modal {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .confirm-modal h3 {
+            color: #0f172a;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .confirm-modal p {
+            color: #475569;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-confirm-yes {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-confirm-yes:hover {
+            background: #dc2626;
+        }
+
+        .btn-confirm-no {
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-confirm-no:hover {
+            background: #cbd5e1;
         }
     </style>
 </head>
 
 <body>
+    <!-- Contenedor para Toasts -->
+    <div id="toast-container"></div>
+
+    <!-- Modal de Confirmación Personalizado -->
+    <div id="confirmOverlay">
+        <div class="confirm-modal">
+            <h3>¿Descartar cambios?</h3>
+            <p>Estás editando/creando un pedido. Si sales ahora, se perderán los datos ingresados.</p>
+            <div class="confirm-actions">
+                <button class="btn-confirm-no" onclick="cerrarConfirmacion()">Cancelar</button>
+                <button class="btn-confirm-yes" onclick="confirmarSalida()">Sí, salir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DRAWER LATERAL -->
+    <div id="drawerOverlay" onclick="cerrarDrawer(event)">
+        <div class="drawer-content" id="drawerContent" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <h3 id="drawTitle">Detalle de Pedido</h3>
+                <button class="close-drawer" onclick="cerrarDrawer(null, true)"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="drawer-body" id="drawBody"></div>
+            <div class="drawer-footer">
+                <button class="btn-editar" id="btnEditarRegistro"><i class="fa-solid fa-pen"></i> Completar Fase 2
+                    (Cliente Final)</button>
+            </div>
+        </div>
+    </div>
 
     <div class="app-container">
+        <!-- BARRA DE NAVEGACIÓN -->
         <div class="app-header">
-            <div style="font-family:'Poppins'; font-weight:700; font-size:18px;"><i
-                    class="fa-solid fa-square-poll-horizontal"></i> Control Central de Pedidos</div>
+            <div style="font-family:'Poppins'; font-weight:700; font-size:18px;"><i class="fa-solid fa-chart-line"></i>
+                BI & Control de Pedidos</div>
             <div class="nav-tabs">
-                <button class="tab-btn active" onclick="switchTab('tab-dashboard')">📊 KPIs y Auditoría</button>
-                <button class="tab-btn" onclick="switchTab('tab-nuevo')">➕ Crear Pedido</button>
+                <button class="tab-btn active" onclick="switchTab('tab-dashboard')">📊 Dashboard Analítico</button>
+                <button class="tab-btn" onclick="switchTab('tab-historial')">📋 Historial de Pedidos</button>
+                <button class="tab-btn" id="btnTabNuevo" onclick="switchTab('tab-nuevo')">➕ Alta de Pedido</button>
             </div>
         </div>
 
-        <!-- TAB 1: DASHBOARD Y AUDITORÍA -->
+        <!-- TAB 1: DASHBOARD -->
         <div id="tab-dashboard" class="content-tab active">
+
             <div class="filter-bar">
-                <select id="filtroCliente" onchange="aplicarFiltros()">
-                    <option value="">🔍 Filtrar por Cliente (Todos)</option>
-                </select>
-                <select id="filtroProducto" onchange="aplicarFiltros()">
-                    <option value="">🧪 Filtrar por Producto (Todos)</option>
-                </select>
+                <div class="filter-group"><label>Desde</label><input type="date" id="fInicio"
+                        onchange="procesarFiltros()"></div>
+                <div class="filter-group"><label>Hasta</label><input type="date" id="fFin" onchange="procesarFiltros()">
+                </div>
+                <div class="filter-group"><label>Organización</label><select id="filtroOrg"
+                        onchange="procesarFiltros()">
+                        <option value="">Todas</option>
+                    </select></div>
+                <div class="filter-group"><label>Material</label><select id="filtroMaterial"
+                        onchange="procesarFiltros()">
+                        <option value="">Todos</option>
+                    </select></div>
+                <div class="filter-group"><label>Producto</label><select id="filtroProductoTop"
+                        onchange="procesarFiltros()">
+                        <option value="">Todos</option>
+                    </select></div>
+                <div class="filter-group"><label>Cliente</label><select id="filtroCliente" onchange="procesarFiltros()">
+                        <option value="">Todos</option>
+                    </select></div>
+                <button class="btn-clear" onclick="limpiarTodo()" title="Limpiar Filtros"><i
+                        class="fa-solid fa-rotate-right"></i></button>
+            </div>
+
+            <div id="bannerAccion" class="action-banner">
+                <div>
+                    <div class="action-banner-text"><i class="fa-solid fa-filter"></i> Tienes filtros dinámicos activos
+                        en tu sesión:</div>
+                    <div class="active-filters-chips" id="contenedorChipsDash"></div>
+                </div>
+                <button class="btn-ver-pedidos" id="btnVerPedidos" onclick="switchTab('tab-historial')">Ver 0 Pedidos
+                    ➔</button>
             </div>
 
             <div class="kpi-grid">
-                <div class="kpi-card otd">
-                    <div>
-                        <h4 style="font-size:13px; color:#64748b; text-transform:uppercase;">Efectividad Logística (OTD)
-                        </h4>
-                        <div class="kpi-val" id="txtOtd">0%</div>
-                        <p style="font-size:12px; color:#475569;">Excluye retrasos causados por fleteras externas.</p>
-                    </div>
+                <div class="kpi-card totales clickable-kpi" onclick="removerFiltroChart('estatus')"
+                    title="Limpiar filtros de estatus">
+                    <div class="kpi-title">Pedidos Generados <i class="fa-solid fa-filter-circle-xmark"></i></div>
+                    <div class="kpi-val" id="kpiTotal">0</div>
                 </div>
-                <div class="kpi-card">
-                    <div>
-                        <h4 style="font-size:13px; color:#64748b; text-transform:uppercase;">Conversión Operativa</h4>
-                        <div class="kpi-val" id="txtConversion">0%</div>
-                        <p style="font-size:12px; color:#475569;">Órdenes transformadas en pedidos en tiempo.</p>
-                    </div>
+                <div class="kpi-card completadosTotales clickable-kpi"
+                    onclick="setFiltroChart('estatus', 'Completados')" title="Ver pedidos completados">
+                    <div class="kpi-title">Completados <i class="fa-solid fa-hand-pointer"></i></div>
+                    <div class="kpi-val" id="kpiCompletadosTotales" style="color:#0ea5e9;">0</div>
+                </div>
+                <div class="kpi-card atiempo clickable-kpi" onclick="setFiltroChart('estatus', 'A Tiempo')"
+                    title="Filtrar pedidos A Tiempo">
+                    <div class="kpi-title">A Tiempo <i class="fa-solid fa-hand-pointer"></i></div>
+                    <div class="kpi-val" id="kpiATiempo" style="color:#86bc25;">0</div>
+                </div>
+                <div class="kpi-card atrasados clickable-kpi" onclick="setFiltroChart('estatus', 'Atrasado')"
+                    title="Filtrar pedidos Atrasados">
+                    <div class="kpi-title">Atrasados <i class="fa-solid fa-hand-pointer"></i></div>
+                    <div class="kpi-val" id="kpiAtrasados" style="color:#ef4444;">0</div>
+                </div>
+                <div class="kpi-card proceso clickable-kpi" onclick="setFiltroChart('estatus', 'En Proceso')"
+                    title="Filtrar pedidos En Proceso">
+                    <div class="kpi-title">En Proceso <i class="fa-solid fa-hand-pointer"></i></div>
+                    <div class="kpi-val" id="kpiProceso" style="color:#f59e0b;">0</div>
+                </div>
+                <div class="kpi-card otd">
+                    <div class="kpi-title">Efectividad (OTD)</div>
+                    <div class="kpi-val" id="kpiOtd" style="color:#8b5cf6;">0%</div>
+                </div>
+                <div class="kpi-card conv">
+                    <div class="kpi-title">Conversión (OC)</div>
+                    <div class="kpi-val" id="kpiConv" style="color:#004a80;">0%</div>
                 </div>
             </div>
 
-            <h3 style="font-family:'Poppins'; font-size:16px; margin-bottom:10px;"><i
-                    class="fa-solid fa-magnifying-glass-chart"></i> Desglose Técnico e Historial de Retrasos</h3>
+            <div class="charts-grid-top">
+                <div class="chart-card">
+                    <h4>Estatus Operativo</h4>
+                    <span class="chart-hint">Clic en la gráfica para filtrar</span>
+                    <div class="chart-container"><canvas id="chartEstatus"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h4>Distribución por Organización</h4>
+                    <span class="chart-hint">Clic en la gráfica para filtrar</span>
+                    <div class="chart-container"><canvas id="chartOrg"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h4>Top Materiales (Distribución)</h4>
+                    <span class="chart-hint">Clic en la gráfica para filtrar</span>
+                    <div class="chart-container"><canvas id="chartMaterial"></canvas></div>
+                </div>
+            </div>
+
+            <div class="charts-grid-bottom">
+                <div class="chart-card">
+                    <h4>Top Clientes (Frecuencia)</h4>
+                    <span class="chart-hint">Clic en una barra para filtrar</span>
+                    <div class="chart-container"><canvas id="chartClientes"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h4>Top Productos (Frecuencia)</h4>
+                    <span class="chart-hint">Clic en una barra para filtrar</span>
+                    <div class="chart-container"><canvas id="chartProductos"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: HISTORIAL DE PEDIDOS -->
+        <div id="tab-historial" class="content-tab">
+            <div class="historial-header">
+                <h3 style="font-family:'Poppins'; font-size:18px; color:#004a80;"><i class="fa-solid fa-table-list"></i>
+                    Registro Detallado</h3>
+                <input type="text" id="buscarPedido" class="search-pedido"
+                    placeholder="🔍 Buscar por Cliente, Producto, OC..." onkeyup="procesarFiltros()">
+            </div>
+
+            <div id="bannerAccionHistorial" class="action-banner">
+                <div>
+                    <div class="action-banner-text"><i class="fa-solid fa-filter"></i> Filtros dinámicos activos en tu
+                        tabla:</div>
+                    <div class="active-filters-chips" id="contenedorChipsHistorial"></div>
+                </div>
+                <button class="btn-ver-pedidos" onclick="switchTab('tab-dashboard')"><i
+                        class="fa-solid fa-chart-pie"></i> Ver en Dashboard</button>
+            </div>
+
             <div class="table-wrapper">
                 <table>
                     <thead>
                         <tr>
                             <th>OC</th>
                             <th>Pedido</th>
-                            <th>Pedido Inter</th>
+                            <th>Org</th>
                             <th>Cliente</th>
-                            <th>Producto</th>
-                            <th>Estatus Entrega</th>
-                            <th>Causa del Retraso (Auditoría)</th>
+                            <th>Material / Producto</th>
+                            <th>Fechas (Prog / Ent)</th>
+                            <th>Estatus</th>
                         </tr>
                     </thead>
                     <tbody id="tablaCuerpo"></tbody>
@@ -287,138 +923,740 @@
             </div>
         </div>
 
-        <!-- TAB 2: FORMULARIO DE NUEVO PEDIDO -->
+        <!-- TAB 3: ALTA Y EDICIÓN DE PEDIDO -->
         <div id="tab-nuevo" class="content-tab">
+            <h3 id="tituloFormulario"
+                style="font-family:'Poppins'; font-size:18px; color:#004a80; margin-bottom: 20px;"><i
+                    class="fa-solid fa-file-circle-plus"></i> Generación de Pedido (Fase 1)</h3>
+
             <form id="formPedido" onsubmit="enviarFormulario(event)">
+                <!-- Input oculto para saber si estamos editando (creando Fase 2) -->
+                <input type="hidden" id="esFase2" value="false">
+
                 <div class="form-grid">
-                    <div class="form-group"><label>Fecha Recepción OC</label><input type="date" id="fOc" required></div>
-                    <div class="form-group"><label>OC Cliente</label><input type="text" id="ocCl" required></div>
-                    <div class="form-group"><label>Fecha Creación Pedido</label><input type="date" id="fPed" required>
+
+                    <div class="form-group"
+                        style="grid-column: 1 / -1; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; flex-direction: row; align-items: center; gap: 15px;">
+                        <label style="font-size: 14px; font-weight: 600;">¿Requiere Pedido Intercompañía?</label>
+                        <select id="reqInter" onchange="toggleWorkflow()" style="width: 100px; font-weight: bold;">
+                            <option value="No">No</option>
+                            <option value="Sí">Sí</option>
+                        </select>
                     </div>
-                    <div class="form-group"><label>Pedido Cliente</label><input type="text" id="pedCl" required></div>
-                    <div class="form-group"><label>Organización</label><select id="org">
-                            <option value="PQ">PQ</option>
+
+                    <div class="form-group">
+                        <label>Fecha de Registro</label>
+                        <input type="date" id="fRegistro" readonly
+                            style="background-color: #f1f5f9; border-color: #cbd5e1;">
+                    </div>
+
+                    <div class="form-group grupo-inter" style="display:none;">
+                        <label>OC Intercompañía</label>
+                        <input type="text" id="ocInter" placeholder="Obligatorio para PQ">
+                    </div>
+
+                    <div class="form-group grupo-inter" style="display:none;">
+                        <label>Número Pedido Intercompañía</label>
+                        <input type="text" id="pedInter" placeholder="Obligatorio para PQ">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Organización</label>
+                        <select id="org">
                             <option value="DJP">DJP</option>
-                        </select></div>
-                    <div class="form-group"><label>Cliente</label><input type="text" id="cliente" required></div>
-                    <div class="form-group"><label>Producto (Coadyuvante)</label><input type="text" id="producto"
-                            required></div>
-                    <div class="form-group"><label>Cantidad</label><input type="number" id="cantidad" required></div>
-                    <div class="form-group"><label>Unidad Medida</label><select id="um">
+                            <option value="PQ">PQ</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group grupo-cliente">
+                        <label>Cliente Final</label>
+                        <input type="text" id="cliente" placeholder="Nombre del cliente final">
+                    </div>
+
+                    <div class="form-group grupo-cliente">
+                        <label>OC Cliente Final</label>
+                        <input type="text" id="ocCl" placeholder="Ej. 5864461">
+                    </div>
+
+                    <div class="form-group grupo-cliente">
+                        <label>Pedido Cliente Final</label>
+                        <input type="text" id="pedCl">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Material / Clasificación</label>
+                        <select id="material" required>
+                            <option value="ADYUVANTE">ADYUVANTE</option>
+                            <option value="BLEND">BLEND</option>
+                            <option value="OTRO">OTRO</option>
+                        </select>
+                    </div>
+
+                    <datalist id="nombresProd"></datalist>
+                    <datalist id="skusProd"></datalist>
+
+                    <div class="form-group">
+                        <label>Producto (Nombre)</label>
+                        <input type="text" id="productoNombre" required placeholder="Selecciona el producto..."
+                            list="nombresProd" onchange="autocompletarProducto('nombre')">
+                    </div>
+
+                    <div class="form-group">
+                        <label>SKU (Producto)</label>
+                        <input type="text" id="productoSKU" required placeholder="SKU del producto" list="skusProd"
+                            onchange="autocompletarProducto('sku')">
+                    </div>
+
+                    <div class="form-group"><label>Cantidad</label><input type="number" id="cantidad" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Unidad de Medida</label>
+                        <select id="um">
                             <option value="L">Litros (L)</option>
                             <option value="KG">Kilogramos (KG)</option>
                             <option value="PZA">Piezas (PZA)</option>
-                        </select></div>
-                    <div class="form-group"><label>Fecha Entrega Programada</label><input type="date" id="fProg"
-                            required></div>
-                    <div class="form-group"><label>Surtir Desde (Origen)</label><select id="origen">
-                            <option value="Planta">Planta</option>
-                            <option value="Almacén">Almacén</option>
-                        </select></div>
-                    <div class="form-group"><label>Tipo de Envío</label><select id="tEnvio">
-                            <option value="Propio">Propio</option>
-                            <option value="Fletera">Fletera</option>
-                        </select></div>
-                    <div class="form-group"><label>¿Requiere Pedido Intercompañía?</label><select id="reqInter"
-                            onchange="toggleInter()">
-                            <option value="No">No</option>
-                            <option value="Sí">Sí</option>
-                        </select></div>
-                    <div class="form-group" id="groupInter" style="display:none;"><label>Número Pedido
-                            Inter</label><input type="text" id="pedInter" placeholder="Dejar vacío si está pendiente">
+                        </select>
                     </div>
 
-                    <button type="submit" class="btn-submit">💾 Registrar Pedido en Sistema</button>
+                    <div class="form-group grupo-logistica"><label>Fecha Programada</label><input type="date"
+                            id="fProg"></div>
+                    <div class="form-group grupo-logistica">
+                        <label>Surtir Desde</label>
+                        <select id="origen">
+                            <option value="Planta">Planta</option>
+                            <option value="Almacén">Almacén</option>
+                        </select>
+                    </div>
+                    <div class="form-group grupo-logistica">
+                        <label>Tipo de Envío</label>
+                        <select id="tEnvio">
+                            <option value="Propio">Propio</option>
+                            <option value="Fletera">Fletera</option>
+                            <option value="Consolidado">Consolidado</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="btnSubmitForm" class="btn-submit">💾 Registrar Movimiento</button>
+                    <button type="button" id="btnCancelarEdicion" class="btn-cancelar"
+                        onclick="solicitarConfirmacion()">❌ Cancelar Edición</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        let baseDatosCompleta = [];
+        Chart.register(ChartDataLabels);
 
-        window.onload = function () {
-            cargarInformacion();
+        let baseDatos = [];
+
+        let filtroChartEstatus = null;
+        let filtroChartCliente = null;
+        let filtroChartOrg = null;
+        let filtroChartMaterial = null;
+        let filtroChartProducto = null;
+
+        let gEstatus = null, gClientes = null, gOrg = null, gMaterial = null, gProductos = null;
+
+        // Variables para navegación segura
+        let targetTab = null;
+
+        const baseProductosMock = {
+            "Mezcla de Surfactantes Pi 6 (ADIGOR PLUS)": "52571",
+            "Diabloblend Paraquat TB PE AZ CE 210 Kg": "52628",
+            "Mezcla de Surfactantes Alpha 3 (BUFFERAK)": "52072",
+            "Surfacpol A 1487 TB PE AZ CE 230 KG": "50158",
+            "Mezcla de surfactantes Lambda 1 (LIQUID MAX)": "52087",
+            "Mezcla de Surfactantes Delta 1 (CAMARADA)": "52078"
         };
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.content-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
+        window.onload = () => {
+            cargarInformacion();
+            document.getElementById('fRegistro').value = new Date().toISOString().split('T')[0];
+            inicializarCatalogoTemporal();
+        };
+
+        function mostrarToast(mensaje, tipo = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo}`;
+
+            let icon = 'fa-check-circle';
+            if (tipo === 'error') icon = 'fa-circle-exclamation';
+            if (tipo === 'warning') icon = 'fa-triangle-exclamation';
+            if (tipo === 'info') icon = 'fa-circle-info';
+
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${mensaje}</span>`;
+            container.appendChild(toast);
+
+            // Forzar reflow para la transición
+            toast.offsetHeight;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
-        function toggleInter() {
-            const requere = document.getElementById('reqInter').value;
-            document.getElementById('groupInter').style.display = requere === 'Sí' ? 'block' : 'none';
+        function solicitarConfirmacion() {
+            document.getElementById('confirmOverlay').style.display = 'flex';
         }
 
-        function cargarInformacion() {
-            google.script.run.withSuccessHandler(data => {
-                baseDatosCompleta = data.historialPedidos;
-                document.getElementById('txtOtd').innerText = data.tasaEfectividad + '%';
-                document.getElementById('txtConversion').innerText = data.tasaConversionOC + '%';
-
-                // Llenar selectores de filtros
-                const selCl = document.getElementById('filtroCliente');
-                data.clientesLista.forEach(c => selCl.options.add(new Option(c, c)));
-                const selPr = document.getElementById('filtroProducto');
-                data.productosLista.forEach(p => selPr.options.add(new Option(p, p)));
-
-                renderTabla(baseDatosCompleta);
-            }).obtenerMetricasKPIs();
+        function cerrarConfirmacion() {
+            document.getElementById('confirmOverlay').style.display = 'none';
+            targetTab = null;
         }
 
-        function renderTabla(lista) {
-            const tbody = document.getElementById('tablaCuerpo');
-            tbody.innerHTML = lista.map(p => `
-        <tr>
-          <td><strong>${p.oc}</strong></td>
-          <td>${p.pedido}</td>
-          <td><span style="color:${p.pedInter.includes('PENDIENTE') ? 'orange' : 'inherit'}">${p.pedInter}</span></td>
-          <td>${p.cliente}</td>
-          <td>${p.producto}</td>
-          <td><span class="badge ${p.estadoEntrega.includes('Atrasado') ? 'atrasado' : 'atiempo'}">${p.estadoEntrega}</span></td>
-          <td style="color:#64748b; font-style:italic;">${p.motivoRetraso}</td>
-        </tr>
-      `).join('');
+        function confirmarSalida() {
+            cerrarConfirmacion();
+            resetFormulario();
+            if (targetTab) {
+                ejecutarSwitchTab(targetTab);
+                targetTab = null;
+            }
         }
 
-        function aplicarFiltros() {
-            const cliente = document.getElementById('filtroCliente').value;
-            const producto = document.getElementById('filtroProducto').value;
+        function inicializarCatalogoTemporal() {
+            const dlNombres = document.getElementById('nombresProd');
+            const dlSKUs = document.getElementById('skusProd');
 
-            const filtrados = baseDatosCompleta.filter(p => {
-                return (cliente === "" || p.cliente === cliente) && (producto === "" || p.producto === producto);
-            });
-            renderTabla(filtrados);
+            for (const [nombre, sku] of Object.entries(baseProductosMock)) {
+                let optionNombre = document.createElement('option');
+                optionNombre.value = nombre;
+                dlNombres.appendChild(optionNombre);
+
+                let optionSKU = document.createElement('option');
+                optionSKU.value = sku;
+                dlSKUs.appendChild(optionSKU);
+            }
+        }
+
+        function autocompletarProducto(origen) {
+            const inputNombre = document.getElementById('productoNombre');
+            const inputSKU = document.getElementById('productoSKU');
+
+            if (origen === 'nombre') {
+                const skuAsignado = baseProductosMock[inputNombre.value];
+                if (skuAsignado) inputSKU.value = skuAsignado;
+            } else if (origen === 'sku') {
+                const nombreEncontrado = Object.keys(baseProductosMock).find(key => baseProductosMock[key] === inputSKU.value);
+                if (nombreEncontrado) inputNombre.value = nombreEncontrado;
+            }
+        }
+
+        function toggleWorkflow() {
+            const esInter = document.getElementById('reqInter').value === 'Sí';
+
+            const org = document.getElementById('org');
+            const cliente = document.getElementById('cliente');
+            const pedInterGroups = document.querySelectorAll('.grupo-inter');
+            const gruposCliente = document.querySelectorAll('.grupo-cliente');
+            const gruposLogistica = document.querySelectorAll('.grupo-logistica');
+
+            // Si estamos en Fase 2 (editando para crear el de cliente final), reqInter está en "Sí" pero la lógica visual cambia
+            const esFase2 = document.getElementById('esFase2').value === "true";
+
+            if (esInter && !esFase2) {
+                org.value = 'PQ';
+                org.disabled = true;
+                cliente.value = 'Intercompañias DJP';
+                cliente.disabled = true;
+
+                pedInterGroups.forEach(el => { el.style.display = 'flex'; });
+                document.getElementById('pedInter').required = true;
+                document.getElementById('ocInter').required = true;
+
+                gruposCliente.forEach(el => { el.style.display = 'none'; el.querySelector('input').required = false; });
+                gruposLogistica.forEach(el => { el.style.display = 'none'; el.querySelector('input, select').required = false; });
+
+            } else if (esInter && esFase2) {
+                // Preparación visual para crear el pedido "hijo" (Cliente Final)
+                org.value = 'DJP';
+                org.disabled = true;
+
+                cliente.value = "";
+                cliente.disabled = false;
+
+                pedInterGroups.forEach(el => { el.style.display = 'flex'; });
+
+                gruposCliente.forEach(el => { el.style.display = 'flex'; el.querySelector('input').required = true; });
+                document.getElementById('pedCl').required = false;
+                gruposLogistica.forEach(el => { el.style.display = 'flex'; el.querySelector('input, select').required = true; });
+
+            } else {
+                org.disabled = false;
+                cliente.value = '';
+                cliente.disabled = false;
+
+                pedInterGroups.forEach(el => { el.style.display = 'none'; });
+                document.getElementById('pedInter').required = false;
+                document.getElementById('ocInter').required = false;
+
+                gruposCliente.forEach(el => { el.style.display = 'flex'; el.querySelector('input').required = true; });
+                document.getElementById('pedCl').required = false;
+
+                gruposLogistica.forEach(el => { el.style.display = 'flex'; el.querySelector('input, select').required = true; });
+            }
+        }
+
+        // Esta función ahora prepara el formulario para CREAR la Fase 2 basada en la Fase 1
+        function prepararEdicion(filaId) {
+            const p = baseDatos.find(i => i.filaId === filaId);
+            if (!p) return;
+
+            // Verificamos si realmente es un pedido Intercompañía
+            if (p.reqInter !== 'Sí' || p.org !== 'PQ') {
+                mostrarToast('Solo puedes crear la Fase 2 (Cliente Final) a partir de pedidos Intercompañía generados en PQ.', 'warning');
+                return;
+            }
+
+            cerrarDrawer(null, true);
+            ejecutarSwitchTab('tab-nuevo');
+
+            document.getElementById('tituloFormulario').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Completar Pedido (Fase 2: Cliente Final)`;
+            document.getElementById('btnSubmitForm').innerText = "💾 Generar Pedido Cliente";
+            document.getElementById('btnCancelarEdicion').style.display = "block";
+            document.getElementById('btnTabNuevo').innerText = "✏️ Fase 2 Activa...";
+
+            // Marcar que estamos creando la fase 2
+            document.getElementById('esFase2').value = "true";
+
+            document.getElementById('fRegistro').value = new Date().toISOString().split('T')[0]; // Fecha actual para el nuevo pedido
+
+            // Bloquear datos base heredados
+            document.getElementById('material').value = p.material;
+            document.getElementById('material').disabled = true;
+            document.getElementById('productoSKU').value = p.productoSKU;
+            document.getElementById('productoSKU').disabled = true;
+            document.getElementById('productoNombre').value = p.productoNombre;
+            document.getElementById('productoNombre').disabled = true;
+            document.getElementById('cantidad').value = p.cantidad;
+            document.getElementById('cantidad').disabled = true;
+            document.getElementById('um').value = p.um;
+            document.getElementById('um').disabled = true;
+
+            document.getElementById('reqInter').value = p.reqInter;
+            document.getElementById('reqInter').disabled = true;
+
+            document.getElementById('ocInter').value = p.ocInter;
+            document.getElementById('ocInter').disabled = true;
+            document.getElementById('pedInter').value = p.pedInter;
+            document.getElementById('pedInter').disabled = true;
+
+            // Llamar a workflow para que muestre los campos de DJP / Cliente
+            toggleWorkflow();
+
+            // Limpiar logística por si acaso
+            document.getElementById('fProg').value = "";
+            document.getElementById('origen').value = "Planta";
+            document.getElementById('tEnvio').value = "Propio";
+        }
+
+        function resetFormulario() {
+            document.getElementById('formPedido').reset();
+            document.getElementById('esFase2').value = "false";
+            document.getElementById('fRegistro').value = new Date().toISOString().split('T')[0];
+
+            document.getElementById('reqInter').disabled = false;
+            document.getElementById('material').disabled = false;
+            document.getElementById('productoNombre').disabled = false;
+            document.getElementById('productoSKU').disabled = false;
+            document.getElementById('cantidad').disabled = false;
+            document.getElementById('um').disabled = false;
+            document.getElementById('org').disabled = false;
+            document.getElementById('ocInter').disabled = false;
+            document.getElementById('pedInter').disabled = false;
+
+            document.getElementById('tituloFormulario').innerHTML = `<i class="fa-solid fa-file-circle-plus"></i> Generación de Pedido (Fase 1)`;
+            document.getElementById('btnSubmitForm').innerText = "💾 Registrar Movimiento";
+            document.getElementById('btnSubmitForm').disabled = false;
+            document.getElementById('btnCancelarEdicion').style.display = "none";
+            document.getElementById('btnTabNuevo').innerText = "➕ Alta de Pedido";
+
+            toggleWorkflow();
         }
 
         function enviarFormulario(e) {
             e.preventDefault();
+            const btn = document.getElementById('btnSubmitForm');
+            btn.innerText = "Guardando..."; btn.disabled = true;
+
+            const reqInter = document.getElementById('reqInter').value;
+            const esFase2 = document.getElementById('esFase2').value === "true";
+
+            let origen = document.getElementById('origen').value;
+            let tipoEnvio = document.getElementById('tEnvio').value;
+            let fechaProg = document.getElementById('fProg').value;
+
+            // Si es Fase 1 (creando el inter original), borramos logística
+            if (reqInter === 'Sí' && !esFase2) {
+                origen = "";
+                tipoEnvio = "";
+                fechaProg = "";
+            }
+
+            let estatusCalc = "En Proceso";
+            if (tipoEnvio === "Fletera" && fechaProg !== "") {
+                estatusCalc = "Completado";
+            }
+
             const obj = {
-                fechaOc: document.getElementById('fOc').value,
-                ocCliente: document.getElementById('ocCl').value,
-                fechaPedido: document.getElementById('fPed').value,
-                pedidoCliente: document.getElementById('pedCl').value,
+                requiereInter: reqInter,
+                fechaRegistro: document.getElementById('fRegistro').value,
+                ocInter: document.getElementById('ocInter').value,
+                pedidoInter: document.getElementById('pedInter').value,
                 org: document.getElementById('org').value,
                 cliente: document.getElementById('cliente').value,
-                producto: document.getElementById('producto').value,
+                ocCliente: document.getElementById('ocCl').value,
+                pedidoCliente: document.getElementById('pedCl').value,
+                material: document.getElementById('material').value,
+                productoNombre: document.getElementById('productoNombre').value,
+                productoSKU: document.getElementById('productoSKU').value,
                 cantidad: document.getElementById('cantidad').value,
                 um: document.getElementById('um').value,
-                fechaProg: document.getElementById('fProg').value,
-                origen: document.getElementById('origen').value,
-                tipoEnvio: document.getElementById('tEnvio').value,
-                requiereInter: document.getElementById('reqInter').value,
-                pedidoInter: document.getElementById('pedInter').value
+                fechaProg: fechaProg,
+                origen: origen,
+                tipoEnvio: tipoEnvio,
+                estatus: estatusCalc
             };
 
-            google.script.run.withSuccessHandler(() => {
-                alert("¡Pedido registrado exitosamente en la base de datos maestra!");
-                document.getElementById('formPedido').reset();
-                cargarInformacion();
-                switchTab('tab-dashboard');
-            }).guardarNuevoPedido(obj);
+            // En este nuevo flujo, SIEMPRE creamos un registro nuevo.
+            google.script.run
+                .withSuccessHandler(() => {
+                    mostrarToast(esFase2 ? "¡Pedido Fase 2 (Cliente Final) generado exitosamente!" : "¡Pedido Fase 1 registrado exitosamente!");
+                    resetFormulario();
+                    cargarInformacion();
+                    ejecutarSwitchTab('tab-historial');
+                })
+                .withFailureHandler((error) => {
+                    mostrarToast("Error al guardar: " + error.message, 'error');
+                    btn.innerText = "💾 Registrar Movimiento"; btn.disabled = false;
+                })
+                .guardarNuevoPedido(obj);
+        }
+
+        function switchTab(t) {
+            if (t !== 'tab-nuevo' && document.getElementById('esFase2').value === "true") {
+                targetTab = t;
+                solicitarConfirmacion();
+                return;
+            }
+            ejecutarSwitchTab(t);
+        }
+
+        function ejecutarSwitchTab(t) {
+            document.querySelectorAll('.content-tab').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+            document.getElementById(t).classList.add('active');
+
+            const btnNav = document.querySelector(`.tab-btn[onclick="switchTab('${t}')"]`);
+            if (btnNav) btnNav.classList.add('active');
+        }
+
+        function cargarInformacion() {
+            google.script.run.withSuccessHandler(data => {
+                baseDatos = data.historialPedidos;
+
+                const sC = document.getElementById('filtroCliente');
+                const sOrg = document.getElementById('filtroOrg');
+                const sMat = document.getElementById('filtroMaterial');
+                const sProd = document.getElementById('filtroProductoTop');
+
+                if (sC.options.length === 1) {
+                    data.clientesLista.forEach(c => sC.options.add(new Option(c, c)));
+                    data.orgsLista.forEach(o => sOrg.options.add(new Option(o, o)));
+                    data.materialesLista.forEach(m => sMat.options.add(new Option(m, m)));
+                    data.productosLista.forEach(p => sProd.options.add(new Option(p, p)));
+                }
+                procesarFiltros();
+            }).obtenerMetricasKPIs();
+        }
+
+        function limpiarTodo() {
+            document.getElementById('fInicio').value = '';
+            document.getElementById('fFin').value = '';
+            document.getElementById('filtroCliente').value = '';
+            document.getElementById('filtroOrg').value = '';
+            document.getElementById('filtroMaterial').value = '';
+            document.getElementById('filtroProductoTop').value = '';
+            document.getElementById('buscarPedido').value = '';
+
+            removerFiltroChart('all');
+        }
+
+        function limpiarBusqueda() {
+            document.getElementById('buscarPedido').value = '';
+            procesarFiltros();
+        }
+
+        function procesarFiltros() {
+            const fIni = document.getElementById('fInicio').value;
+            const fFin = document.getElementById('fFin').value;
+            const cli = document.getElementById('filtroCliente').value;
+            const org = document.getElementById('filtroOrg').value;
+            const mat = document.getElementById('filtroMaterial').value;
+            const prod = document.getElementById('filtroProductoTop').value;
+            const busqueda = document.getElementById('buscarPedido').value.toLowerCase();
+
+            let datosFiltrados = baseDatos.filter(p => {
+                let pasaFecha = true;
+                if (fIni && p.fechaCreacionISO) pasaFecha = pasaFecha && (p.fechaCreacionISO >= fIni);
+                if (fFin && p.fechaCreacionISO) pasaFecha = pasaFecha && (p.fechaCreacionISO <= fFin);
+                let pasaCli = cli === "" || p.cliente === cli;
+                let pasaOrg = org === "" || p.org === org;
+                let pasaMat = mat === "" || p.material === mat;
+                let pasaProdTop = prod === "" || p.productoNombre === prod;
+
+                let pasaEstChart = true;
+                if (filtroChartEstatus) {
+                    if (filtroChartEstatus === 'Completados') {
+                        pasaEstChart = String(p.estadoEntrega).includes('Completado') || String(p.estadoEntrega).includes('Tiempo') || String(p.estadoEntrega).includes('Atrasado');
+                    } else if (filtroChartEstatus === 'En Proceso') {
+                        pasaEstChart = String(p.estadoEntrega).includes('Proceso') || String(p.estadoEntrega).includes('Tránsito');
+                    } else {
+                        pasaEstChart = String(p.estadoEntrega).includes(filtroChartEstatus);
+                    }
+                }
+
+                let pasaCliChart = !filtroChartCliente || p.cliente === filtroChartCliente;
+                let pasaOrgChart = !filtroChartOrg || p.org === filtroChartOrg;
+                let pasaMatChart = !filtroChartMaterial || p.material === filtroChartMaterial;
+                let pasaProdChart = !filtroChartProducto || p.productoNombre === filtroChartProducto;
+
+                let pasaBusqueda = true;
+                if (busqueda !== "") {
+                    pasaBusqueda =
+                        String(p.oc).toLowerCase().includes(busqueda) ||
+                        String(p.pedido).toLowerCase().includes(busqueda) ||
+                        String(p.cliente).toLowerCase().includes(busqueda) ||
+                        String(p.productoNombre).toLowerCase().includes(busqueda) ||
+                        String(p.productoSKU).toLowerCase().includes(busqueda) ||
+                        String(p.material).toLowerCase().includes(busqueda);
+                }
+
+                return pasaFecha && pasaCli && pasaOrg && pasaMat && pasaProdTop && pasaEstChart && pasaCliChart && pasaOrgChart && pasaMatChart && pasaProdChart && pasaBusqueda;
+            });
+
+            actualizarKPIsYGraficas(datosFiltrados);
+            actualizarTabla(datosFiltrados);
+            gestionarBannerYSincronizarChips(datosFiltrados.length);
+        }
+
+        function gestionarBannerYSincronizarChips(cantidadPedidos) {
+            const bannerDash = document.getElementById('bannerAccion');
+            const chipsContDash = document.getElementById('contenedorChipsDash');
+            const bannerHist = document.getElementById('bannerAccionHistorial');
+            const chipsContHist = document.getElementById('contenedorChipsHistorial');
+
+            const busquedaVal = document.getElementById('buscarPedido').value;
+            let hayFiltroGrafica = filtroChartEstatus || filtroChartCliente || filtroChartOrg || filtroChartMaterial || filtroChartProducto || busquedaVal !== "";
+
+            let chipsHtml = '';
+            if (filtroChartEstatus) chipsHtml += `<div class="filter-chip" style="background:#ef4444" onclick="removerFiltroChart('estatus')" title="Eliminar filtro">Estatus: ${filtroChartEstatus} <i class="fa-solid fa-xmark"></i></div>`;
+            if (filtroChartOrg) chipsHtml += `<div class="filter-chip" style="background:#0ea5e9" onclick="removerFiltroChart('org')" title="Eliminar filtro">Org: ${filtroChartOrg} <i class="fa-solid fa-xmark"></i></div>`;
+            if (filtroChartMaterial) chipsHtml += `<div class="filter-chip" style="background:#8b5cf6" onclick="removerFiltroChart('material')" title="Eliminar filtro">Mat: ${filtroChartMaterial.substring(0, 15)} <i class="fa-solid fa-xmark"></i></div>`;
+            if (filtroChartProducto) chipsHtml += `<div class="filter-chip" style="background:#10b981" onclick="removerFiltroChart('producto')" title="Eliminar filtro">Prod: ${filtroChartProducto.substring(0, 15)} <i class="fa-solid fa-xmark"></i></div>`;
+            if (filtroChartCliente) chipsHtml += `<div class="filter-chip" style="background:#004a80" onclick="removerFiltroChart('cliente')" title="Eliminar filtro">Cliente: ${filtroChartCliente.substring(0, 15)} <i class="fa-solid fa-xmark"></i></div>`;
+            if (busquedaVal !== "") chipsHtml += `<div class="filter-chip" style="background:#64748b" onclick="limpiarBusqueda()" title="Eliminar búsqueda">Búsqueda: ${busquedaVal.substring(0, 15)} <i class="fa-solid fa-xmark"></i></div>`;
+
+            if (hayFiltroGrafica) {
+                chipsHtml += `<button class="btn-clear-chips" onclick="removerFiltroChart('all')">Borrar todos</button>`;
+
+                bannerDash.style.display = 'flex';
+                document.getElementById('btnVerPedidos').innerText = `Ver ${cantidadPedidos} Pedidos ➔`;
+                bannerHist.style.display = 'flex';
+            } else {
+                bannerDash.style.display = 'none';
+                bannerHist.style.display = 'none';
+            }
+
+            chipsContDash.innerHTML = chipsHtml;
+            chipsContHist.innerHTML = chipsHtml;
+        }
+
+        function setFiltroChart(tipo, valor) {
+            if (tipo === 'estatus') filtroChartEstatus = valor;
+            if (tipo === 'cliente') filtroChartCliente = valor;
+            if (tipo === 'org') filtroChartOrg = valor;
+            if (tipo === 'material') filtroChartMaterial = valor;
+            if (tipo === 'producto') filtroChartProducto = valor;
+            procesarFiltros();
+        }
+
+        function removerFiltroChart(tipo) {
+            if (tipo === 'estatus' || tipo === 'all') filtroChartEstatus = null;
+            if (tipo === 'cliente' || tipo === 'all') filtroChartCliente = null;
+            if (tipo === 'org' || tipo === 'all') filtroChartOrg = null;
+            if (tipo === 'material' || tipo === 'all') filtroChartMaterial = null;
+            if (tipo === 'producto' || tipo === 'all') filtroChartProducto = null;
+            if (tipo === 'all') document.getElementById('buscarPedido').value = '';
+            procesarFiltros();
+        }
+
+        function actualizarKPIsYGraficas(datos) {
+            let aTiempo = 0, atrasado = 0, enTransito = 0;
+            let countC = {}, countOrg = {}, countMat = {}, countP = {};
+            let ocsCount = 0, pedsCount = 0;
+
+            datos.forEach(p => {
+                let e = String(p.estadoEntrega || "");
+                if (e.includes('Atrasado')) atrasado++;
+                else if (e.includes('A Tiempo') || e.includes('Completado')) aTiempo++;
+                else enTransito++;
+
+                if (p.cliente) countC[p.cliente] = (countC[p.cliente] || 0) + 1;
+                if (p.org) countOrg[p.org] = (countOrg[p.org] || 0) + 1;
+                if (p.material) countMat[p.material] = (countMat[p.material] || 0) + 1;
+                if (p.productoNombre) countP[p.productoNombre] = (countP[p.productoNombre] || 0) + 1;
+
+                if (p.oc || p.ocInter !== "—") ocsCount++;
+                if (p.pedido || p.pedInter !== "—") pedsCount++;
+            });
+
+            let completados = aTiempo + atrasado;
+            let totalPedidos = completados + enTransito;
+            let tasaConversion = ocsCount > 0 ? ((pedsCount / ocsCount) * 100).toFixed(1) : 0;
+
+            document.getElementById('kpiTotal').innerText = totalPedidos;
+            document.getElementById('kpiCompletadosTotales').innerText = completados;
+            document.getElementById('kpiATiempo').innerText = aTiempo;
+            document.getElementById('kpiAtrasados').innerText = atrasado;
+            document.getElementById('kpiProceso').innerText = enTransito;
+            document.getElementById('kpiOtd').innerText = completados > 0 ? ((aTiempo / completados) * 100).toFixed(1) + '%' : '0%';
+            document.getElementById('kpiConv').innerText = tasaConversion + '%';
+
+            const donaFormatter = (v, ctx) => {
+                let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                return v > 0 ? ((v * 100) / sum).toFixed(0) + "%" : "";
+            };
+
+            if (gEstatus) gEstatus.destroy();
+            gEstatus = new Chart(document.getElementById('chartEstatus').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: ['A Tiempo', 'Atrasado', 'En Tránsito'], datasets: [{ data: [aTiempo, atrasado, enTransito], backgroundColor: ['#86bc25', '#ef4444', '#f59e0b'], borderWidth: 0 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 10 } },
+                    onClick: (e, act) => { if (act.length > 0) setFiltroChart('estatus', ['A Tiempo', 'Atrasado', 'En Tránsito'][act[0].index]); },
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } }, datalabels: { color: '#fff', font: { weight: 'bold', size: 14 }, formatter: donaFormatter } }
+                }
+            });
+
+            let labelsOrg = Object.keys(countOrg);
+            let dataOrg = Object.values(countOrg);
+            if (gOrg) gOrg.destroy();
+            gOrg = new Chart(document.getElementById('chartOrg').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: labelsOrg, datasets: [{ data: dataOrg, backgroundColor: ['#3b82f6', '#0ea5e9'], borderWidth: 0 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 10 } },
+                    onClick: (e, act) => { if (act.length > 0) setFiltroChart('org', labelsOrg[act[0].index]); },
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } }, datalabels: { color: '#fff', font: { weight: 'bold', size: 14 }, formatter: donaFormatter } }
+                }
+            });
+
+            let topM = Object.entries(countMat).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            let labelsMat = topM.map(i => i[0]);
+            let dataMat = topM.map(i => i[1]);
+            if (gMaterial) gMaterial.destroy();
+            gMaterial = new Chart(document.getElementById('chartMaterial').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: labelsMat, datasets: [{ data: dataMat, backgroundColor: ['#8b5cf6', '#a855f7', '#d946ef', '#f43f5e', '#f472b6'], borderWidth: 0 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 10 } },
+                    onClick: (e, act) => { if (act.length > 0) setFiltroChart('material', labelsMat[act[0].index]); },
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } }, datalabels: { color: '#fff', font: { weight: 'bold', size: 14 }, formatter: donaFormatter } }
+                }
+            });
+
+            let topC = Object.entries(countC).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            if (gClientes) gClientes.destroy();
+            gClientes = new Chart(document.getElementById('chartClientes').getContext('2d'), {
+                type: 'bar',
+                data: { labels: topC.map(i => i[0]), datasets: [{ data: topC.map(i => i[1]), backgroundColor: '#004a80', borderRadius: 4 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 5 } },
+                    onClick: (e, act) => { if (act.length > 0) setFiltroChart('cliente', topC[act[0].index][0]); },
+                    plugins: { legend: { display: false }, datalabels: { display: false } },
+                    scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45, callback: function (v) { let l = this.getLabelForValue(v); return l.length > 15 ? l.substr(0, 15) + '...' : l; } } } }
+                }
+            });
+
+            let topP = Object.entries(countP).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            if (gProductos) gProductos.destroy();
+            gProductos = new Chart(document.getElementById('chartProductos').getContext('2d'), {
+                type: 'bar',
+                data: { labels: topP.map(i => i[0]), datasets: [{ data: topP.map(i => i[1]), backgroundColor: '#10b981', borderRadius: 4 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { bottom: 5 } },
+                    onClick: (e, act) => { if (act.length > 0) setFiltroChart('producto', topP[act[0].index][0]); },
+                    plugins: { legend: { display: false }, datalabels: { display: false } },
+                    scales: { x: { ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45, callback: function (v) { let l = this.getLabelForValue(v); return l.length > 15 ? l.substr(0, 15) + '...' : l; } } } }
+                }
+            });
+        }
+
+        function actualizarTabla(datosFiltrados) {
+            document.getElementById('tablaCuerpo').innerHTML = datosFiltrados.map(p => {
+                let est = String(p.estadoEntrega || "");
+                let badgeClass = 'transito';
+                if (est.includes('Atrasado')) badgeClass = 'atrasado';
+                else if (est.includes('Tiempo')) badgeClass = 'atiempo';
+                else if (est.includes('Completado')) badgeClass = 'completado';
+
+                let fechaEntStr = p.fechaEntrega === 'N/A' || !p.fechaEntrega ? '--' : p.fechaEntrega;
+
+                return `
+                <tr onclick="abrirDrawer(${p.filaId})">
+                    <td><strong>${p.oc || '—'}</strong></td>
+                    <td>${p.pedido || '—'}</td>
+                    <td><span style="font-weight:600; color:#0369a1;">${p.org || '—'}</span></td>
+                    <td>${p.cliente || '—'}</td>
+                    <td><div style="font-size:11px; color:#64748b;">${p.material || ''}</div>${p.productoNombre || '—'} <br><small style="color:#94a3b8;">${p.productoSKU}</small></td>
+                    <td style="font-size:12px; color:#475569;">
+                        <div style="color:#94a3b8; font-size:11px;">Prog: ${p.fechaProg}</div>
+                        <div style="font-weight:600;">Ent: ${fechaEntStr}</div>
+                    </td>
+                    <td><span class="badge ${badgeClass}">${p.estadoEntrega}</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function abrirDrawer(filaId) {
+            const p = baseDatos.find(i => i.filaId === filaId);
+            if (!p) return;
+
+            document.getElementById('drawTitle').innerText = `Pedido ${p.pedido || 'Intercompañía'}`;
+            document.getElementById('drawBody').innerHTML = `
+                <p><strong>Organización:</strong> ${p.org}</p>
+                <p><strong>Cliente:</strong> ${p.cliente}</p>
+                <p><strong>Material:</strong> ${p.material}</p>
+                <p><strong>Producto:</strong> ${p.productoNombre} <br><small>SKU: ${p.productoSKU}</small></p>
+                <p><strong>Volumen:</strong> ${p.cantidad} ${p.um}</p>
+                <br>
+                <p><strong>OC Relacionada:</strong> ${p.oc}</p>
+                <p><strong>OC Intercompañía:</strong> ${p.ocInter}</p>
+                <p><strong>Pedido Inter:</strong> ${p.pedInter}</p>
+                <br>
+                <p><strong>Fecha Creación:</strong> ${p.fechaCreacion === 'N/A' ? 'No Registrada' : p.fechaCreacion}</p>
+                <p><strong>Fecha Programada:</strong> ${p.fechaProg}</p>
+                <p><strong>Fecha Entrega Real:</strong> ${p.fechaEntrega === 'N/A' ? 'Pendiente' : p.fechaEntrega}</p>
+                <br>
+                <p><strong>Estatus:</strong> <span class="badge ${p.estadoEntrega.includes('Atrasado') ? 'atrasado' : p.estadoEntrega.includes('Tiempo') || p.estadoEntrega.includes('Completado') ? 'atiempo' : 'transito'}">${p.estadoEntrega}</span></p>
+            `;
+
+            document.getElementById('btnEditarRegistro').onclick = function () {
+                prepararEdicion(filaId);
+            };
+
+            document.getElementById('drawerOverlay').style.display = 'block';
+            setTimeout(() => document.getElementById('drawerContent').classList.add('open'), 10);
+        }
+
+        function cerrarDrawer(e, forzar = false) {
+            if (forzar || (e && e.target.id === 'drawerOverlay')) {
+                document.getElementById('drawerContent').classList.remove('open');
+                setTimeout(() => document.getElementById('drawerOverlay').style.display = 'none', 300);
+            }
         }
     </script>
 </body>

@@ -5,148 +5,189 @@ function doGet() {
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-/**
- * Obtiene métricas avanzadas, registros detallados y catálogos para filtros
- */
 function obtenerMetricasKPIs() {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('MONITOREO DE PEDIDOS');
     if (!sheet) return { error: "No se encontró la pestaña 'MONITOREO DE PEDIDOS'" };
 
     const datos = sheet.getDataRange().getValues();
-    const cabeceras = datos[0];
+    const cabeceras = datos[0].map(c => String(c).trim().toUpperCase());
     const filas = datos.slice(1);
 
-    // Índices mapeados por cabecera exacta
-    const idxOC = cabeceras.indexOf('OC CLIENTE');
-    const idxPedido = cabeceras.indexOf('PEDIDO CLIENTE');
-    const idxPedidoInter = cabeceras.indexOf('PEDIDO INTER');
-    const idxCliente = cabeceras.indexOf('CLIENTE');
-    const idxProducto = cabeceras.indexOf('PRODUCTO');
-    const idxProg = cabeceras.indexOf('ENTREGA PROGRAMADA');
-    const idxEntrega = cabeceras.indexOf('FECHA DE ENTREGA');
-    const idxEnvio = cabeceras.indexOf('TIPO DE ENVÍO');
-    const idxMotivo = cabeceras.indexOf('MOTIVO DE RETRASO');
+    const getIdx = (nombre) => cabeceras.indexOf(nombre);
+
+    const idxOC = getIdx('OC CLIENTE');
+    const idxPedido = getIdx('PEDIDO CLIENTE');
+    const idxCreacion = getIdx('FECHA CREACIÓN PEDIDO');
+
+    // CAMPOS INTERCOMPAÑIA
+    const idxPedidoInter = getIdx('PEDIDO INTER');
+    const idxOcInter = getIdx('OC INTER');
+
+    const idxOrg = getIdx('ORG');
+    const idxCliente = getIdx('CLIENTE');
+    const idxMaterial = getIdx('MATERIAL');
+
+    const idxSkuPq = getIdx('SKU PQ');
+    const idxProducto = getIdx('PRODUCTO');
+
+    const idxCantidad = getIdx('CANTIDAD');
+    const idxUm = getIdx('UM');
+
+    const idxProg = getIdx('ENTREGA PROGRAMADA');
+    const idxEntrega = getIdx('FECHA DE ENTREGA');
+    const idxEstatus = getIdx('ESTATUS');
+    const idxEstatusTiempo = getIdx('ESTATUS DE TIEMPO');
+
+    const idxOrigen = getIdx('ORIGEN');
+    const idxEnvio = getIdx('TIPO DE ENVIO') !== -1 ? getIdx('TIPO DE ENVIO') : getIdx('TIPO DE ENVÍO');
 
     let ocsTotales = 0, pedidosConvertidos = 0;
-    let aTiempo = 0, retraso = 0, enTransito = 0;
-
-    const conteoClientes = {};
-    const conteoProductos = {};
     const historialPedidos = [];
     const clientesUnicos = new Set();
     const productosUnicos = new Set();
+    const orgsUnicas = new Set();
+    const materialesUnicos = new Set();
+
+    const formatearFechaStr = (fecha) => {
+        if (!fecha || fecha === "") return "N/A";
+        let d = new Date(fecha);
+        return isNaN(d.getTime()) ? "N/A" : d.toLocaleDateString('es-MX');
+    };
+
+    const formatoISO = (fecha) => {
+        if (!fecha || fecha === "") return null;
+        let d = new Date(fecha);
+        return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
+    };
 
     filas.forEach((fila, nFila) => {
-        const oc = fila[idxOC];
-        const pedido = fila[idxPedido];
-        const pedInter = fila[idxPedidoInter];
-        const cliente = fila[idxCliente];
-        const producto = fila[idxProducto];
-        const fProg = fila[idxProg];
-        const fEntrega = fila[idxEntrega];
-        const tEnvio = String(fila[idxEnvio]).toUpperCase();
-        const motivo = fila[idxMotivo] || "No especificado";
+        const oc = idxOC !== -1 ? fila[idxOC] : "";
+        const pedido = idxPedido !== -1 ? fila[idxPedido] : "";
+        const pedInter = idxPedidoInter !== -1 ? fila[idxPedidoInter] : "";
+        const ocInter = idxOcInter !== -1 ? fila[idxOcInter] : "";
 
-        if (!oc && !pedido) return;
+        const org = idxOrg !== -1 ? fila[idxOrg] : "";
+        const cliente = idxCliente !== -1 ? fila[idxCliente] : "";
+        const material = idxMaterial !== -1 ? fila[idxMaterial] : "";
 
-        if (oc) ocsTotales++;
-        if (pedido) pedidosConvertidos++;
-        if (cliente) { conteoClientes[cliente] = (conteoClientes[cliente] || 0) + 1; clientesUnicos.add(cliente); }
-        if (producto) { conteoProductos[producto] = (conteoProductos[producto] || 0) + 1; productosUnicos.add(producto); }
+        const skuPq = idxSkuPq !== -1 ? fila[idxSkuPq] : "";
+        const productoNombre = idxProducto !== -1 ? fila[idxProducto] : "";
 
-        let estadoEntrega = "En Tránsito";
+        const cantidad = idxCantidad !== -1 ? (parseFloat(fila[idxCantidad]) || 0) : 0;
+        const um = idxUm !== -1 ? fila[idxUm] : "";
 
-        if (pedido) {
-            if (!fEntrega || fEntrega === "") {
-                enTransito++;
-            } else if (tEnvio === "FLETERA") {
-                // Regla de negocio: Si es fletera, es exención de responsabilidad -> Cuenta como A Tiempo
-                aTiempo++;
-                estadoEntrega = "A Tiempo (Fletera)";
-            } else {
-                const dateProg = new Date(fProg);
-                const dateEntrega = new Date(fEntrega);
-                dateProg.setHours(0, 0, 0, 0);
-                dateEntrega.setHours(0, 0, 0, 0);
+        const estatus = idxEstatus !== -1 ? fila[idxEstatus] : "";
+        const estatusTiempo = idxEstatusTiempo !== -1 ? fila[idxEstatusTiempo] : "";
 
-                if (dateEntrega <= dateProg) {
-                    aTiempo++;
-                    estadoEntrega = "A Tiempo";
-                } else {
-                    retraso++;
-                    estadoEntrega = "Atrasado";
-                }
-            }
+        if (!oc && !pedido && !pedInter && !ocInter) return;
+
+        if (oc || ocInter) ocsTotales++;
+        if (pedido || pedInter) {
+            pedidosConvertidos++;
+            if (cliente) clientesUnicos.add(cliente);
+            if (productoNombre) productosUnicos.add(productoNombre);
+            if (org) orgsUnicas.add(org);
+            if (material) materialesUnicos.add(material);
+        }
+
+        let estadoEntrega = "En Proceso";
+        if (estatus === "Completado") {
+            estadoEntrega = estatusTiempo ? estatusTiempo : "Completado";
+        } else if (estatus === "En Proceso") {
+            estadoEntrega = "En Proceso";
         }
 
         historialPedidos.push({
             filaId: nFila + 2,
-            oc,
-            pedido,
-            pedInter: pedInter || "PENDIENTE",
-            cliente,
-            producto,
+            oc, pedido,
+            pedInter: pedInter || "—",
+            ocInter: ocInter || "—",
+            cliente, org, material, cantidad, um,
+            productoNombre: productoNombre,
+            productoSKU: skuPq,
             estadoEntrega,
-            motivoRetraso: estadoEntrega === "Atrasado" ? motivo : "—"
+            origen: idxOrigen !== -1 ? fila[idxOrigen] : "",
+            tipoEnvio: idxEnvio !== -1 ? fila[idxEnvio] : "",
+            fechaCreacionISO: formatoISO(idxCreacion !== -1 ? fila[idxCreacion] : ""),
+            fechaCreacion: formatearFechaStr(idxCreacion !== -1 ? fila[idxCreacion] : ""),
+            fechaProg: formatearFechaStr(idxProg !== -1 ? fila[idxProg] : ""),
+            fechaEntrega: formatearFechaStr(idxEntrega !== -1 ? fila[idxEntrega] : ""),
+            fechaProgRaw: formatoISO(idxProg !== -1 ? fila[idxProg] : "")
         });
     });
 
-    const topClientes = Object.entries(conteoClientes).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    const topProductos = Object.entries(conteoProductos).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    const totalConcluidos = aTiempo + retraso;
-
     return {
-        ocsTotales,
-        pedidosConvertidos,
         tasaConversionOC: ocsTotales > 0 ? ((pedidosConvertidos / ocsTotales) * 100).toFixed(1) : 0,
-        aTiempo,
-        retraso,
-        enTransito,
-        tasaEfectividad: totalConcluidos > 0 ? ((aTiempo / totalConcluidos) * 100).toFixed(1) : 0,
-        topClientes,
-        topProductos,
         historialPedidos,
         clientesLista: Array.from(clientesUnicos),
-        productosLista: Array.from(productosUnicos)
+        productosLista: Array.from(productosUnicos),
+        orgsLista: Array.from(orgsUnicas),
+        materialesLista: Array.from(materialesUnicos)
     };
 }
 
-/**
- * Inserta un nuevo pedido validando flujos intercompañía
- */
 function guardarNuevoPedido(objetoPedido) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('MONITOREO DE PEDIDOS');
-    if (!sheet) return { error: "Error al acceder a la hoja." };
+    const cabeceras = sheet.getDataRange().getValues()[0].map(c => String(c).trim().toUpperCase());
 
-    const cabeceras = sheet.getDataRange().getValues()[0];
-
-    // Si requiere intercompañía pero no se capturó número, se registra explícitamente como "PENDIENTE INTER"
     let numPedInter = objetoPedido.pedidoInter;
-    if (objetoPedido.requiereInter === "Sí" && (!numPedInter || numPedInter.trim() === "")) {
-        numPedInter = "PENDIENTE INTER";
+    let numOcInter = objetoPedido.ocInter;
+
+    if (objetoPedido.requiereInter === "Sí") {
+        if (!numPedInter || numPedInter.trim() === "") numPedInter = "PENDIENTE";
+        if (!numOcInter || numOcInter.trim() === "") numOcInter = "PENDIENTE";
     }
 
-    // Estructurar la nueva fila respetando el mapa de columnas
     const nuevaFila = cabeceras.map(cabecera => {
         switch (cabecera) {
-            case 'FECHA RECEPCIÓN OC': return objetoPedido.fechaOc;
+            case 'FECHA RECEPCIÓN OC': return objetoPedido.fechaRegistro;
             case 'OC CLIENTE': return objetoPedido.ocCliente;
-            case 'FECHA CREACIÓN PEDIDO': return objetoPedido.fechaPedido;
+            case 'FECHA CREACIÓN PEDIDO': return objetoPedido.fechaRegistro;
             case 'PEDIDO CLIENTE': return objetoPedido.pedidoCliente;
             case 'PEDIDO INTER': return numPedInter;
+            case 'OC INTER': return numOcInter;
             case 'ORG': return objetoPedido.org;
             case 'CLIENTE': return objetoPedido.cliente;
-            case 'PRODUCTO': return objetoPedido.producto;
+            case 'MATERIAL': return objetoPedido.material;
+            case 'SKU PQ': return objetoPedido.productoSKU;
+            case 'PRODUCTO': return objetoPedido.productoNombre;
             case 'CANTIDAD': return objetoPedido.cantidad;
             case 'UM': return objetoPedido.um;
             case 'ENTREGA PROGRAMADA': return objetoPedido.fechaProg;
             case 'ORIGEN': return objetoPedido.origen;
-            case 'TIPO DE ENVÍO': return objetoPedido.tipoEnvio;
-            case 'PEDIDO INTER REQUERIDO': return objetoPedido.requiereInter;
+            case 'TIPO DE ENVÍO':
+            case 'TIPO DE ENVIO': return objetoPedido.tipoEnvio;
+            case 'ESTATUS': return objetoPedido.estatus;
+            case 'ESTATUS DE TIEMPO': return "";
+            case 'PEDIDO INTER REQUERIDO': return objetoPedido.requiereInter; //Añadido para mantener consistencia
             default: return "";
         }
     });
-
     sheet.appendRow(nuevaFila);
+    return { success: true };
+}
+
+function actualizarPedido(filaId, objetoPedido) {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('MONITOREO DE PEDIDOS');
+    const cabeceras = sheet.getDataRange().getValues()[0].map(c => String(c).trim().toUpperCase());
+    const filaActual = sheet.getRange(filaId, 1, 1, cabeceras.length).getValues()[0];
+
+    const filaActualizada = cabeceras.map((cabecera, index) => {
+        switch (cabecera) {
+            case 'OC CLIENTE': return objetoPedido.ocCliente || filaActual[index];
+            case 'PEDIDO CLIENTE': return objetoPedido.pedidoCliente || filaActual[index];
+            case 'ORG': return objetoPedido.org || filaActual[index];
+            case 'CLIENTE': return objetoPedido.cliente || filaActual[index];
+            case 'ENTREGA PROGRAMADA': return objetoPedido.fechaProg || filaActual[index];
+            case 'FECHA DE ENTREGA': return objetoPedido.fechaEntregaReal || filaActual[index];
+            case 'ORIGEN': return objetoPedido.origen || filaActual[index];
+            case 'TIPO DE ENVÍO':
+            case 'TIPO DE ENVIO': return objetoPedido.tipoEnvio || filaActual[index];
+            case 'ESTATUS': return objetoPedido.estatus || filaActual[index];
+            default: return filaActual[index];
+        }
+    });
+
+    sheet.getRange(filaId, 1, 1, filaActualizada.length).setValues([filaActualizada]);
     return { success: true };
 }
