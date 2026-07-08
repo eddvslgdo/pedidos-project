@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <base target="_top">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lato:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1200px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        /* NAV TABS */
+        .app-header {
+            background: linear-gradient(135deg, #004a80 0%, #002b4d 100%);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #93c5fd;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Poppins';
+            font-weight: 500;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #004a80;
+            font-weight: 600;
+        }
+
+        .content-tab {
+            padding: 30px;
+            display: none;
+        }
+
+        .content-tab.active {
+            display: block;
+        }
+
+        /* FILTROS */
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .filter-bar select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            flex: 1;
+            font-family: 'Lato';
+        }
+
+        /* GRID DASHBOARD */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-left: 5px solid #004a80;
+        }
+
+        .kpi-card.otd {
+            border-left-color: #86bc25;
+        }
+
+        .kpi-val {
+            font-family: 'Poppins';
+            font-size: 32px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        /* TABLA DE AUDITORÍA */
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f8fafc;
+            padding: 12px;
+            font-family: 'Poppins';
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .badge.atrasado {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .badge.atiempo {
+            background: #dcfce7;
+            color: #86bc25;
+        }
+
+        /* FORMULARIO */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-family: 'Poppins';
+            font-size: 13px;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-size: 14px;
+        }
+
+        .btn-submit {
+            grid-column: span 3;
+            background: #86bc25;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-family: 'Poppins';
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+            transition: 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: #73a41f;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <div class="app-header">
+            <div style="font-family:'Poppins'; font-weight:700; font-size:18px;"><i
+                    class="fa-solid fa-square-poll-horizontal"></i> Control Central de Pedidos</div>
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('tab-dashboard')">📊 KPIs y Auditoría</button>
+                <button class="tab-btn" onclick="switchTab('tab-nuevo')">➕ Crear Pedido</button>
+            </div>
+        </div>
+
+        <!-- TAB 1: DASHBOARD Y AUDITORÍA -->
+        <div id="tab-dashboard" class="content-tab active">
+            <div class="filter-bar">
+                <select id="filtroCliente" onchange="aplicarFiltros()">
+                    <option value="">🔍 Filtrar por Cliente (Todos)</option>
+                </select>
+                <select id="filtroProducto" onchange="aplicarFiltros()">
+                    <option value="">🧪 Filtrar por Producto (Todos)</option>
+                </select>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card otd">
+                    <div>
+                        <h4 style="font-size:13px; color:#64748b; text-transform:uppercase;">Efectividad Logística (OTD)
+                        </h4>
+                        <div class="kpi-val" id="txtOtd">0%</div>
+                        <p style="font-size:12px; color:#475569;">Excluye retrasos causados por fleteras externas.</p>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <h4 style="font-size:13px; color:#64748b; text-transform:uppercase;">Conversión Operativa</h4>
+                        <div class="kpi-val" id="txtConversion">0%</div>
+                        <p style="font-size:12px; color:#475569;">Órdenes transformadas en pedidos en tiempo.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="font-family:'Poppins'; font-size:16px; margin-bottom:10px;"><i
+                    class="fa-solid fa-magnifying-glass-chart"></i> Desglose Técnico e Historial de Retrasos</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>OC</th>
+                            <th>Pedido</th>
+                            <th>Pedido Inter</th>
+                            <th>Cliente</th>
+                            <th>Producto</th>
+                            <th>Estatus Entrega</th>
+                            <th>Causa del Retraso (Auditoría)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCuerpo"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 2: FORMULARIO DE NUEVO PEDIDO -->
+        <div id="tab-nuevo" class="content-tab">
+            <form id="formPedido" onsubmit="enviarFormulario(event)">
+                <div class="form-grid">
+                    <div class="form-group"><label>Fecha Recepción OC</label><input type="date" id="fOc" required></div>
+                    <div class="form-group"><label>OC Cliente</label><input type="text" id="ocCl" required></div>
+                    <div class="form-group"><label>Fecha Creación Pedido</label><input type="date" id="fPed" required>
+                    </div>
+                    <div class="form-group"><label>Pedido Cliente</label><input type="text" id="pedCl" required></div>
+                    <div class="form-group"><label>Organización</label><select id="org">
+                            <option value="PQ">PQ</option>
+                            <option value="DJP">DJP</option>
+                        </select></div>
+                    <div class="form-group"><label>Cliente</label><input type="text" id="cliente" required></div>
+                    <div class="form-group"><label>Producto (Coadyuvante)</label><input type="text" id="producto"
+                            required></div>
+                    <div class="form-group"><label>Cantidad</label><input type="number" id="cantidad" required></div>
+                    <div class="form-group"><label>Unidad Medida</label><select id="um">
+                            <option value="L">Litros (L)</option>
+                            <option value="KG">Kilogramos (KG)</option>
+                            <option value="PZA">Piezas (PZA)</option>
+                        </select></div>
+                    <div class="form-group"><label>Fecha Entrega Programada</label><input type="date" id="fProg"
+                            required></div>
+                    <div class="form-group"><label>Surtir Desde (Origen)</label><select id="origen">
+                            <option value="Planta">Planta</option>
+                            <option value="Almacén">Almacén</option>
+                        </select></div>
+                    <div class="form-group"><label>Tipo de Envío</label><select id="tEnvio">
+                            <option value="Propio">Propio</option>
+                            <option value="Fletera">Fletera</option>
+                        </select></div>
+                    <div class="form-group"><label>¿Requiere Pedido Intercompañía?</label><select id="reqInter"
+                            onchange="toggleInter()">
+                            <option value="No">No</option>
+                            <option value="Sí">Sí</option>
+                        </select></div>
+                    <div class="form-group" id="groupInter" style="display:none;"><label>Número Pedido
+                            Inter</label><input type="text" id="pedInter" placeholder="Dejar vacío si está pendiente">
+                    </div>
+
+                    <button type="submit" class="btn-submit">💾 Registrar Pedido en Sistema</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let baseDatosCompleta = [];
+
+        window.onload = function () {
+            cargarInformacion();
+        };
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.content-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function toggleInter() {
+            const requere = document.getElementById('reqInter').value;
+            document.getElementById('groupInter').style.display = requere === 'Sí' ? 'block' : 'none';
+        }
+
+        function cargarInformacion() {
+            google.script.run.withSuccessHandler(data => {
+                baseDatosCompleta = data.historialPedidos;
+                document.getElementById('txtOtd').innerText = data.tasaEfectividad + '%';
+                document.getElementById('txtConversion').innerText = data.tasaConversionOC + '%';
+
+                // Llenar selectores de filtros
+                const selCl = document.getElementById('filtroCliente');
+                data.clientesLista.forEach(c => selCl.options.add(new Option(c, c)));
+                const selPr = document.getElementById('filtroProducto');
+                data.productosLista.forEach(p => selPr.options.add(new Option(p, p)));
+
+                renderTabla(baseDatosCompleta);
+            }).obtenerMetricasKPIs();
+        }
+
+        function renderTabla(lista) {
+            const tbody = document.getElementById('tablaCuerpo');
+            tbody.innerHTML = lista.map(p => `
+        <tr>
+          <td><strong>${p.oc}</strong></td>
+          <td>${p.pedido}</td>
+          <td><span style="color:${p.pedInter.includes('PENDIENTE') ? 'orange' : 'inherit'}">${p.pedInter}</span></td>
+          <td>${p.cliente}</td>
+          <td>${p.producto}</td>
+          <td><span class="badge ${p.estadoEntrega.includes('Atrasado') ? 'atrasado' : 'atiempo'}">${p.estadoEntrega}</span></td>
+          <td style="color:#64748b; font-style:italic;">${p.motivoRetraso}</td>
+        </tr>
+      `).join('');
+        }
+
+        function aplicarFiltros() {
+            const cliente = document.getElementById('filtroCliente').value;
+            const producto = document.getElementById('filtroProducto').value;
+
+            const filtrados = baseDatosCompleta.filter(p => {
+                return (cliente === "" || p.cliente === cliente) && (producto === "" || p.producto === producto);
+            });
+            renderTabla(filtrados);
+        }
+
+        function enviarFormulario(e) {
+            e.preventDefault();
+            const obj = {
+                fechaOc: document.getElementById('fOc').value,
+                ocCliente: document.getElementById('ocCl').value,
+                fechaPedido: document.getElementById('fPed').value,
+                pedidoCliente: document.getElementById('pedCl').value,
+                org: document.getElementById('org').value,
+                cliente: document.getElementById('cliente').value,
+                producto: document.getElementById('producto').value,
+                cantidad: document.getElementById('cantidad').value,
+                um: document.getElementById('um').value,
+                fechaProg: document.getElementById('fProg').value,
+                origen: document.getElementById('origen').value,
+                tipoEnvio: document.getElementById('tEnvio').value,
+                requiereInter: document.getElementById('reqInter').value,
+                pedidoInter: document.getElementById('pedInter').value
+            };
+
+            google.script.run.withSuccessHandler(() => {
+                alert("¡Pedido registrado exitosamente en la base de datos maestra!");
+                document.getElementById('formPedido').reset();
+                cargarInformacion();
+                switchTab('tab-dashboard');
+            }).guardarNuevoPedido(obj);
+        }
+    </script>
+</body>
+
+</html>
