@@ -91,8 +91,10 @@ function obtenerMetricasKPIs() {
         let estadoEntrega = "En Proceso";
         if (estatus === "Completado") {
             estadoEntrega = estatusTiempo ? estatusTiempo : "Completado";
-        } else if (estatus === "En Proceso") {
-            estadoEntrega = "En Proceso";
+        } else if (estatus === "Cancelado") {
+            estadoEntrega = "Cancelado";
+        } else if (estatus === "En Tránsito") {
+            estadoEntrega = "En Tránsito";
         }
 
         historialPedidos.push({
@@ -183,6 +185,7 @@ function guardarNuevoPedido(objetoPedido) {
             case 'CANTIDAD': return objetoPedido.cantidad;
             case 'UM': return objetoPedido.um;
             case 'ENTREGA PROGRAMADA': return objetoPedido.fechaProg;
+            case 'FECHA DE ENTREGA': return objetoPedido.fechaEntregaReal || ""; // Agregado para Fletera
             case 'ORIGEN': return objetoPedido.origen;
             case 'TIPO DE ENVÍO':
             case 'TIPO DE ENVIO': return objetoPedido.tipoEnvio;
@@ -193,6 +196,45 @@ function guardarNuevoPedido(objetoPedido) {
         }
     });
     sheet.appendRow(nuevaFila);
+    return { success: true };
+}
+
+function actualizarPedidoDesdeDrawer(filaId, estatus, fechaEntrega) {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('MONITOREO DE PEDIDOS');
+    const cabeceras = sheet.getDataRange().getValues()[0].map(c => String(c).trim().toUpperCase());
+
+    const idxEstatus = cabeceras.indexOf('ESTATUS');
+    const idxEntrega = cabeceras.indexOf('FECHA DE ENTREGA');
+
+    if (idxEstatus === -1 || idxEntrega === -1) {
+        throw new Error("No se encontraron las columnas 'ESTATUS' o 'FECHA DE ENTREGA'. Verifica los encabezados.");
+    }
+
+    // Actualizamos las celdas directamente usando el ID de fila
+    sheet.getRange(filaId, idxEstatus + 1).setValue(estatus);
+    sheet.getRange(filaId, idxEntrega + 1).setValue(fechaEntrega || "");
+
+    return { success: true };
+}
+
+function toggleDrawerFecha() {
+    const estatus = document.getElementById('drawerEstatus').value;
+    const inputFecha = document.getElementById('drawerFechaEntrega');
+
+    if (estatus === 'Completado') {
+        inputFecha.disabled = false;
+        // Si no tenía fecha, le sugerimos la fecha del día de hoy
+        if (!inputFecha.value) inputFecha.value = new Date().toISOString().split('T')[0];
+    } else {
+        inputFecha.value = ""; // Limpia la fecha porque no se ha entregado
+        inputFecha.disabled = true; // Bloquea el campo para evitar errores
+    }
+}
+
+function eliminarPedido(filaId) {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('MONITOREO DE PEDIDOS');
+    // Como le pasamos el filaId real, borra la fila exacta de la hoja
+    sheet.deleteRow(filaId);
     return { success: true };
 }
 
@@ -208,6 +250,7 @@ function actualizarPedido(filaId, objetoPedido) {
             case 'OC CLIENTE': return objetoPedido.ocCliente;
             case 'PEDIDO CLIENTE': return objetoPedido.pedidoCliente;
             case 'ENTREGA PROGRAMADA': return objetoPedido.fechaProg;
+            case 'FECHA DE ENTREGA': return objetoPedido.fechaEntregaReal || filaActual[index];
             case 'ORIGEN': return objetoPedido.origen;
             case 'TIPO DE ENVÍO':
             case 'TIPO DE ENVIO': return objetoPedido.tipoEnvio;

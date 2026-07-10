@@ -732,11 +732,11 @@
 
     <div id="confirmOverlay">
         <div class="confirm-modal">
-            <h3>¿Descartar cambios?</h3>
-            <p>Estás editando/creando un pedido. Si sales ahora, se perderán los datos ingresados.</p>
+            <h3 id="confirmTitle">¿Descartar cambios?</h3>
+            <p id="confirmText">Estás editando/creando un pedido. Si sales ahora, se perderán los datos ingresados.</p>
             <div class="confirm-actions">
                 <button class="btn-confirm-no" onclick="cerrarConfirmacion()">Cancelar</button>
-                <button class="btn-confirm-yes" onclick="confirmarSalida()">Sí, salir</button>
+                <button class="btn-confirm-yes" id="btnConfirmAction" onclick="confirmarSalida()">Sí, salir</button>
             </div>
         </div>
     </div>
@@ -1308,7 +1308,6 @@
             let clienteFinal = document.getElementById('cliente').value;
             let orgFinal = document.getElementById('org').value;
 
-            // Si es Fase 1, limpiamos para la base de datos
             if (reqInter === 'Sí' && !esFase2) {
                 origen = "";
                 tipoEnvio = "";
@@ -1317,10 +1316,13 @@
             }
 
             let estatusCalc = "En Proceso";
+            let fechaEntregaCalc = ""; // Lógica fletera
+
+            // Si es fletera, asumimos completado y copiamos la fecha programada
             if (tipoEnvio === "Fletera" && fechaProg !== "") {
                 estatusCalc = "Completado";
+                fechaEntregaCalc = fechaProg;
             }
-
             const obj = {
                 requiereInter: reqInter,
                 fechaRegistro: document.getElementById('fRegistro').value,
@@ -1340,7 +1342,8 @@
                 fechaProg: fechaProg,
                 origen: origen,
                 tipoEnvio: tipoEnvio,
-                estatus: estatusCalc
+                estatus: estatusCalc,
+                echaEntregaReal: fechaEntregaCalc
             };
 
             if (filaId !== "" && esFase2) {
@@ -1663,7 +1666,7 @@
                     <td>${p.pedido || '—'}</td>
                     <td><span style="font-weight:600; color:#0369a1;">${p.org || '—'}</span></td>
                     <td>${p.cliente || '—'}</td>
-                    <td><div style="font-size:11px; color:#64748b;">${p.material || ''}</div>${p.productoNombre || '—'}<br><small style="color:#94a3b8;">${p.productoSKUPQ} / ${p.productoSKUDJP}</small></td>
+                    <td><div style="font-size:11px; color:#64748b;">${p.material || ''}</div>${p.productoNombre || '—'}<br><small style="color:#94a3b8;">${p.productoSKUPQ || ''} ${p.productoSKUDJP && p.productoSKUDJP !== 'undefined' ? '/ ' + p.productoSKUDJP : ''}</small></td>
                     <td style="font-size:12px; color:#475569;">
                         <div style="color:#94a3b8; font-size:11px;">Prog: ${p.fechaProg}</div>
                         <div style="font-weight:600;">Ent: ${fechaEntStr}</div>
@@ -1677,38 +1680,138 @@
             const p = baseDatos.find(i => i.filaId === filaId);
             if (!p) return;
 
+            let estatusActual = p.estadoEntrega.includes("Tránsito") ? "En Tránsito" :
+                (p.estadoEntrega.includes("Completado") || p.estadoEntrega.includes("Tiempo") || p.estadoEntrega.includes("Atrasado")) ? "Completado" :
+                    p.estadoEntrega === "Cancelado" ? "Cancelado" : "En Proceso";
+
+            // Si ya se completó o canceló, bloqueamos la edición
+            let isLocked = estatusActual === "Completado" || estatusActual === "Cancelado";
+
             document.getElementById('drawTitle').innerText = `Pedido ${p.pedido || 'Intercompañía'}`;
+
             document.getElementById('drawBody').innerHTML = `
-                <p><strong>Organización:</strong> ${p.org}</p>
-                <p><strong>Cliente:</strong> ${p.cliente}</p>
-                <p><strong>Material:</strong> ${p.material}</p>
-                <p><strong>Producto:</strong> ${p.productoNombre} <br><small>SKU PQ: ${p.productoSKUPQ} | SKU DJP: ${p.productoSKUDJP} <br> Alias: ${p.alias}</small></p>
-                <br>
-                <p><strong>OC Relacionada:</strong> ${p.oc}</p>
-                <p><strong>OC Intercompañía:</strong> ${p.ocInter}</p>
-                <p><strong>Pedido Inter:</strong> ${p.pedInter}</p>
-                <br>
-                <p><strong>Fecha Creación:</strong> ${p.fechaCreacion === 'N/A' ? 'No Registrada' : p.fechaCreacion}</p>
-                <p><strong>Fecha Programada:</strong> ${p.fechaProg}</p>
-                <p><strong>Fecha Entrega Real:</strong> ${p.fechaEntrega === 'N/A' ? 'Pendiente' : p.fechaEntrega}</p>
-                <br>
-                <p><strong>Estatus:</strong> <span class="badge ${p.estadoEntrega.includes('Atrasado') ? 'atrasado' : p.estadoEntrega.includes('Tiempo') || p.estadoEntrega.includes('Completado') ? 'atiempo' : 'transito'}">${p.estadoEntrega}</span></p>
+                <div style="margin-bottom:15px; border-bottom: 1px dashed #e2e8f0; padding-bottom:15px;">
+                    <p style="font-size:12px; color:#94a3b8; text-transform:uppercase; margin-bottom:5px;">Detalles del Producto</p>
+                    <h3 style="font-size:18px; color:#1e293b; margin-bottom:5px; line-height:1.2;">${p.productoNombre}</h3>
+                    <p style="font-size:13px; color:#64748b; margin-bottom:8px;"><strong>Org:</strong> ${p.org} | <strong>Cliente:</strong> ${p.cliente || '—'}</p>
+                    <p style="font-size:12px; color:#94a3b8;">SKU PQ: ${p.productoSKUPQ || '—'} ${p.productoSKUDJP && p.productoSKUDJP !== 'undefined' ? '| SKU DJP: ' + p.productoSKUDJP : ''}</p>
+                    <p style="font-size:14px; color:#0284c7; font-weight:700; margin-top:8px;">📦 Volumen: ${p.cantidad} ${p.um}</p>
+                </div>
+
+                <div style="margin-bottom:15px; border-bottom: 1px dashed #e2e8f0; padding-bottom:15px; font-size:13px; color:#475569; line-height:1.8;">
+                    <div style="display:flex; justify-content:space-between;"><strong>OC Cliente:</strong> <span>${p.oc || '—'}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>OC Intercompañía:</strong> <span>${p.ocInter || '—'}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Pedido Inter:</strong> <span>${p.pedInter || '—'}</span></div>
+                </div>
+
+                <div style="margin-bottom:20px; font-size:13px; color:#475569; line-height:1.8;">
+                    <div style="display:flex; justify-content:space-between;"><strong>Creación:</strong> <span>${p.fechaCreacion === 'N/A' ? 'No Registrada' : p.fechaCreacion}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><strong>Programada:</strong> <span>${p.fechaProg}</span></div>
+                </div>
+
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                    <p style="font-family:'Poppins'; font-size:12px; font-weight:700; color:#004a80; text-transform:uppercase; margin-bottom:15px;">
+                        <i class="fa-solid fa-pen-to-square"></i> Gestión de Entrega ${isLocked ? '(Bloqueado)' : ''}
+                    </p>
+                    
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block; font-size:11px; font-weight:600; color:#64748b; margin-bottom:5px;">ESTATUS OPERATIVO</label>
+                        <select id="drawerEstatus" onchange="toggleDrawerFecha()" ${isLocked ? 'disabled' : ''} style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px; background:#f8fafc;">
+                            <option value="En Proceso" ${estatusActual === "En Proceso" ? "selected" : ""}>En Proceso</option>
+                            <option value="En Tránsito" ${estatusActual === "En Tránsito" ? "selected" : ""}>En Tránsito</option>
+                            <option value="Completado" ${estatusActual === "Completado" ? "selected" : ""}>Completado</option>
+                            <option value="Cancelado" ${estatusActual === "Cancelado" ? "selected" : ""}>Cancelado</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="display:block; font-size:11px; font-weight:600; color:#64748b; margin-bottom:5px;">FECHA DE ENTREGA REAL</label>
+                        <input type="date" id="drawerFechaEntrega" value="${p.fechaEntregaRaw || ''}" ${estatusActual !== "Completado" ? "disabled" : ""}
+                               style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px; background:#f8fafc; font-family:'Lato';">
+                    </div>
+                </div>
             `;
 
-            document.getElementById('btnEditarRegistro').onclick = function () {
-                prepararEdicion(filaId);
-            };
+            // Ocultar botón de actualizar si ya está bloqueado (completado o cancelado)
+            let btnGuardarHtml = isLocked ? '' : `<button class="btn-submit" style="margin-top:0; flex:1; background:#004a80; border-radius:8px; padding:12px;" onclick="guardarCambiosRapidos(${p.filaId})">Actualizar Estatus</button>`;
+
+            document.querySelector('.drawer-footer').innerHTML = `
+                <button class="btn-cancelar" style="display:block; background:#fff; color:#ef4444; border:1px solid #ef4444; padding: 12px; border-radius: 8px; cursor: pointer; width: 50px;" onclick="eliminarFila(${p.filaId})" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                ${btnGuardarHtml}
+                <button style="background:#f59e0b; color:white; border-radius:8px; padding:12px; border:none; cursor:pointer;" onclick="prepararEdicion(${p.filaId})" title="Abrir Formulario"><i class="fa-solid fa-expand"></i></button>
+            `;
 
             document.getElementById('drawerOverlay').style.display = 'block';
             setTimeout(() => document.getElementById('drawerContent').classList.add('open'), 10);
         }
-
         function cerrarDrawer(e, forzar = false) {
             if (forzar || (e && e.target.id === 'drawerOverlay')) {
                 document.getElementById('drawerContent').classList.remove('open');
                 setTimeout(() => document.getElementById('drawerOverlay').style.display = 'none', 300);
             }
         }
+
+        function eliminarFila(filaId) {
+            cerrarDrawer(null, true);
+            document.getElementById('confirmTitle').innerText = '¿Eliminar Pedido?';
+            document.getElementById('confirmText').innerText = 'Esta acción es irreversible y se borrará de la base de datos.';
+            document.getElementById('btnConfirmAction').innerText = 'Sí, eliminar';
+            document.getElementById('btnConfirmAction').onclick = function () { ejecutarEliminacion(filaId); };
+            document.getElementById('confirmOverlay').style.display = 'flex';
+        }
+
+        function ejecutarEliminacion(filaId) {
+            cerrarConfirmacion();
+            mostrarToast("Eliminando pedido...", "info");
+            google.script.run
+                .withSuccessHandler(() => {
+                    mostrarToast("Pedido eliminado correctamente.");
+                    cargarInformacion();
+                })
+                .withFailureHandler((error) => {
+                    mostrarToast("Error al eliminar: " + error.message, "error");
+                })
+                .eliminarPedido(filaId);
+        }
+
+        function guardarCambiosRapidos(filaId) {
+            const nuevoEstatus = document.getElementById('drawerEstatus').value;
+            const nuevaFecha = document.getElementById('drawerFechaEntrega').value;
+
+            // VALIDACIÓN: Si es completado, fuerza la fecha
+            if (nuevoEstatus === 'Completado' && !nuevaFecha) {
+                mostrarToast("Debes ingresar la Fecha de Entrega Real para completar el pedido.", "warning");
+                return;
+            }
+
+            mostrarToast("Actualizando estatus...", "info");
+
+            google.script.run
+                .withSuccessHandler(() => {
+                    mostrarToast("¡Estatus del pedido actualizado!");
+                    cerrarDrawer(null, true);
+                    cargarInformacion();
+                })
+                .withFailureHandler((error) => {
+                    mostrarToast("Error al actualizar: " + error.message, 'error');
+                })
+                .actualizarPedidoDesdeDrawer(filaId, nuevoEstatus, nuevaFecha);
+        }
+
+        function toggleDrawerFecha() {
+            const estatus = document.getElementById('drawerEstatus').value;
+            const inputFecha = document.getElementById('drawerFechaEntrega');
+
+            if (estatus === 'Completado') {
+                inputFecha.disabled = false;
+                // Si la fecha está vacía, le sugerimos la de hoy
+                if (!inputFecha.value) inputFecha.value = new Date().toISOString().split('T')[0];
+            } else {
+                inputFecha.value = ""; // Limpia la fecha porque no se ha entregado
+                inputFecha.disabled = true; // Bloquea el campo
+            }
+        }
+
     </script>
 </body>
 
