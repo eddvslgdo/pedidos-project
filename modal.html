@@ -436,7 +436,7 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             background: white;
             padding: 20px;
@@ -508,6 +508,137 @@
             cursor: pointer;
             font-size: 14px;
             margin-top: 5px;
+        }
+
+        /* Estilos Toasts y Modales */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: #ffffff;
+            border-left: 5px solid #86bc25;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 300px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+
+        .toast.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .toast i {
+            font-size: 18px;
+        }
+
+        .toast.success i {
+            color: #86bc25;
+        }
+
+        .toast.error i {
+            color: #ef4444;
+        }
+
+        .toast.warning i {
+            color: #f59e0b;
+        }
+
+        #confirmOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .confirm-modal {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .confirm-modal h3 {
+            color: #0f172a;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .confirm-modal p {
+            color: #475569;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-confirm-yes {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-confirm-yes:hover {
+            background: #dc2626;
+        }
+
+        .btn-confirm-no {
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-confirm-no:hover {
+            background: #cbd5e1;
         }
 
         #drawerOverlay {
@@ -593,155 +724,12 @@
             font-weight: 600;
             cursor: pointer;
         }
-
-        /* Estilos para el Toast Personalizado */
-        #toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .toast {
-            background: #ffffff;
-            border-left: 5px solid #86bc25;
-            /* Color por defecto (éxito) */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            padding: 15px 20px;
-            border-radius: 8px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 14px;
-            color: #1e293b;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 300px;
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s ease-in-out;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .toast.error {
-            border-left-color: #ef4444;
-        }
-
-        .toast.warning {
-            border-left-color: #f59e0b;
-        }
-
-        .toast.info {
-            border-left-color: #3b82f6;
-        }
-
-        .toast i {
-            font-size: 18px;
-        }
-
-        .toast.success i {
-            color: #86bc25;
-        }
-
-        .toast.error i {
-            color: #ef4444;
-        }
-
-        .toast.warning i {
-            color: #f59e0b;
-        }
-
-        .toast.info i {
-            color: #3b82f6;
-        }
-
-        /* Estilos para Modal de Confirmación Personalizado */
-        #confirmOverlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            z-index: 10001;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(2px);
-        }
-
-        .confirm-modal {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .confirm-modal h3 {
-            color: #0f172a;
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-
-        .confirm-modal p {
-            color: #475569;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        .confirm-actions {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .btn-confirm-yes {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-
-        .btn-confirm-yes:hover {
-            background: #dc2626;
-        }
-
-        .btn-confirm-no {
-            background: #e2e8f0;
-            color: #475569;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-
-        .btn-confirm-no:hover {
-            background: #cbd5e1;
-        }
     </style>
 </head>
 
 <body>
-    <!-- Contenedor para Toasts -->
     <div id="toast-container"></div>
 
-    <!-- Modal de Confirmación Personalizado -->
     <div id="confirmOverlay">
         <div class="confirm-modal">
             <h3>¿Descartar cambios?</h3>
@@ -753,7 +741,6 @@
         </div>
     </div>
 
-    <!-- DRAWER LATERAL -->
     <div id="drawerOverlay" onclick="cerrarDrawer(event)">
         <div class="drawer-content" id="drawerContent" onclick="event.stopPropagation()">
             <div class="drawer-header">
@@ -770,7 +757,6 @@
     </div>
 
     <div class="app-container">
-        <!-- BARRA DE NAVEGACIÓN -->
         <div class="app-header">
             <div style="font-family:'Poppins'; font-weight:700; font-size:18px;"><i class="fa-solid fa-chart-line"></i>
                 BI & Control de Pedidos</div>
@@ -781,7 +767,6 @@
             </div>
         </div>
 
-        <!-- TAB 1: DASHBOARD -->
         <div id="tab-dashboard" class="content-tab active">
 
             <div class="filter-bar">
@@ -886,7 +871,6 @@
             </div>
         </div>
 
-        <!-- TAB 2: HISTORIAL DE PEDIDOS -->
         <div id="tab-historial" class="content-tab">
             <div class="historial-header">
                 <h3 style="font-family:'Poppins'; font-size:18px; color:#004a80;"><i class="fa-solid fa-table-list"></i>
@@ -923,14 +907,14 @@
             </div>
         </div>
 
-        <!-- TAB 3: ALTA Y EDICIÓN DE PEDIDO -->
         <div id="tab-nuevo" class="content-tab">
             <h3 id="tituloFormulario"
                 style="font-family:'Poppins'; font-size:18px; color:#004a80; margin-bottom: 20px;"><i
                     class="fa-solid fa-file-circle-plus"></i> Generación de Pedido (Fase 1)</h3>
 
             <form id="formPedido" onsubmit="enviarFormulario(event)">
-                <!-- Input oculto para saber si estamos editando (creando Fase 2) -->
+                <input type="date" id="fRegistro" style="display:none;">
+                <input type="hidden" id="filaIdForm">
                 <input type="hidden" id="esFase2" value="false">
 
                 <div class="form-grid">
@@ -942,12 +926,6 @@
                             <option value="No">No</option>
                             <option value="Sí">Sí</option>
                         </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Fecha de Registro</label>
-                        <input type="date" id="fRegistro" readonly
-                            style="background-color: #f1f5f9; border-color: #cbd5e1;">
                     </div>
 
                     <div class="form-group grupo-inter" style="display:none;">
@@ -992,19 +970,34 @@
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label>Alias</label>
+                        <input type="text" id="alias" placeholder="Identificador corto..." list="aliasProd"
+                            oninput="autocompletarProducto('alias')" onchange="autocompletarProducto('alias')">
+                    </div>
+
                     <datalist id="nombresProd"></datalist>
-                    <datalist id="skusProd"></datalist>
+                    <datalist id="skusPQProd"></datalist>
+                    <datalist id="skusDJPProd"></datalist>
+                    <datalist id="aliasProd"></datalist>
 
                     <div class="form-group">
                         <label>Producto (Nombre)</label>
                         <input type="text" id="productoNombre" required placeholder="Selecciona el producto..."
-                            list="nombresProd" onchange="autocompletarProducto('nombre')">
+                            list="nombresProd" oninput="autocompletarProducto('nombre')"
+                            onchange="autocompletarProducto('nombre')">
                     </div>
 
                     <div class="form-group">
-                        <label>SKU (Producto)</label>
-                        <input type="text" id="productoSKU" required placeholder="SKU del producto" list="skusProd"
-                            onchange="autocompletarProducto('sku')">
+                        <label>SKU PQ</label>
+                        <input type="text" id="productoSKUPQ" placeholder="SKU PQ..." list="skusPQProd"
+                            oninput="autocompletarProducto('skuPq')" onchange="autocompletarProducto('skuPq')">
+                    </div>
+
+                    <div class="form-group">
+                        <label>SKU DJP</label>
+                        <input type="text" id="productoSKUDJP" placeholder="SKU DJP..." list="skusDJPProd"
+                            oninput="autocompletarProducto('skuDjp')" onchange="autocompletarProducto('skuDjp')">
                     </div>
 
                     <div class="form-group"><label>Cantidad</label><input type="number" id="cantidad" required min="1">
@@ -1057,22 +1050,14 @@
 
         let gEstatus = null, gClientes = null, gOrg = null, gMaterial = null, gProductos = null;
 
-        // Variables para navegación segura
         let targetTab = null;
 
-        const baseProductosMock = {
-            "Mezcla de Surfactantes Pi 6 (ADIGOR PLUS)": "52571",
-            "Diabloblend Paraquat TB PE AZ CE 210 Kg": "52628",
-            "Mezcla de Surfactantes Alpha 3 (BUFFERAK)": "52072",
-            "Surfacpol A 1487 TB PE AZ CE 230 KG": "50158",
-            "Mezcla de surfactantes Lambda 1 (LIQUID MAX)": "52087",
-            "Mezcla de Surfactantes Delta 1 (CAMARADA)": "52078"
-        };
+        // Base de Datos Real inyectada desde Sheets (Catalogo)
+        let catalogoProductos = {};
 
         window.onload = () => {
             cargarInformacion();
             document.getElementById('fRegistro').value = new Date().toISOString().split('T')[0];
-            inicializarCatalogoTemporal();
         };
 
         function mostrarToast(mensaje, tipo = 'success') {
@@ -1083,12 +1068,10 @@
             let icon = 'fa-check-circle';
             if (tipo === 'error') icon = 'fa-circle-exclamation';
             if (tipo === 'warning') icon = 'fa-triangle-exclamation';
-            if (tipo === 'info') icon = 'fa-circle-info';
 
             toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${mensaje}</span>`;
             container.appendChild(toast);
 
-            // Forzar reflow para la transición
             toast.offsetHeight;
             toast.classList.add('show');
 
@@ -1116,36 +1099,65 @@
             }
         }
 
-        function inicializarCatalogoTemporal() {
+        function inicializarCatalogo() {
             const dlNombres = document.getElementById('nombresProd');
-            const dlSKUs = document.getElementById('skusProd');
+            const dlSKUsPQ = document.getElementById('skusPQProd');
+            const dlSKUsDJP = document.getElementById('skusDJPProd');
+            const dlAlias = document.getElementById('aliasProd');
 
-            for (const [nombre, sku] of Object.entries(baseProductosMock)) {
+            // Limpiar listas anteriores
+            dlNombres.innerHTML = "";
+            dlSKUsPQ.innerHTML = "";
+            dlSKUsDJP.innerHTML = "";
+            dlAlias.innerHTML = "";
+
+            for (const [nombre, data] of Object.entries(catalogoProductos)) {
                 let optionNombre = document.createElement('option');
                 optionNombre.value = nombre;
                 dlNombres.appendChild(optionNombre);
 
-                let optionSKU = document.createElement('option');
-                optionSKU.value = sku;
-                dlSKUs.appendChild(optionSKU);
+                if (data.skuPq) { let opt = document.createElement('option'); opt.value = data.skuPq; dlSKUsPQ.appendChild(opt); }
+                if (data.skuDjp) { let opt = document.createElement('option'); opt.value = data.skuDjp; dlSKUsDJP.appendChild(opt); }
+                if (data.alias) { let opt = document.createElement('option'); opt.value = data.alias; dlAlias.appendChild(opt); }
             }
         }
 
         function autocompletarProducto(origen) {
             const inputNombre = document.getElementById('productoNombre');
-            const inputSKU = document.getElementById('productoSKU');
+            const inputSKUPQ = document.getElementById('productoSKUPQ');
+            const inputSKUDJP = document.getElementById('productoSKUDJP');
+            const inputAlias = document.getElementById('alias');
 
-            if (origen === 'nombre') {
-                const skuAsignado = baseProductosMock[inputNombre.value];
-                if (skuAsignado) inputSKU.value = skuAsignado;
-            } else if (origen === 'sku') {
-                const nombreEncontrado = Object.keys(baseProductosMock).find(key => baseProductosMock[key] === inputSKU.value);
-                if (nombreEncontrado) inputNombre.value = nombreEncontrado;
+            let keyEncontrada = null;
+
+            // Formatear strings para comparar robustamente
+            const nomVal = inputNombre.value.toLowerCase().trim();
+            const pqVal = inputSKUPQ.value.trim();
+            const djpVal = inputSKUDJP.value.trim();
+            const aliasVal = inputAlias.value.toLowerCase().trim();
+
+            if (origen === 'nombre' && nomVal.length > 0) {
+                keyEncontrada = Object.keys(catalogoProductos).find(k => k.toLowerCase() === nomVal);
+            } else if (origen === 'skuPq' && pqVal.length > 0) {
+                keyEncontrada = Object.keys(catalogoProductos).find(k => String(catalogoProductos[k].skuPq) === pqVal);
+            } else if (origen === 'skuDjp' && djpVal.length > 0) {
+                keyEncontrada = Object.keys(catalogoProductos).find(k => String(catalogoProductos[k].skuDjp) === djpVal);
+            } else if (origen === 'alias' && aliasVal.length > 0) {
+                keyEncontrada = Object.keys(catalogoProductos).find(k => String(catalogoProductos[k].alias).toLowerCase() === aliasVal);
+            }
+
+            // Si hay un 'match' perfecto, rellenamos el resto
+            if (keyEncontrada && catalogoProductos[keyEncontrada]) {
+                if (origen !== 'nombre') inputNombre.value = keyEncontrada;
+                if (origen !== 'skuPq') inputSKUPQ.value = catalogoProductos[keyEncontrada].skuPq || "";
+                if (origen !== 'skuDjp') inputSKUDJP.value = catalogoProductos[keyEncontrada].skuDjp || "";
+                if (origen !== 'alias') inputAlias.value = catalogoProductos[keyEncontrada].alias || "";
             }
         }
 
         function toggleWorkflow() {
             const esInter = document.getElementById('reqInter').value === 'Sí';
+            const esFase2 = document.getElementById('esFase2').value === "true";
 
             const org = document.getElementById('org');
             const cliente = document.getElementById('cliente');
@@ -1153,10 +1165,8 @@
             const gruposCliente = document.querySelectorAll('.grupo-cliente');
             const gruposLogistica = document.querySelectorAll('.grupo-logistica');
 
-            // Si estamos en Fase 2 (editando para crear el de cliente final), reqInter está en "Sí" pero la lógica visual cambia
-            const esFase2 = document.getElementById('esFase2').value === "true";
-
             if (esInter && !esFase2) {
+                // Fase 1: Pedido PQ 
                 org.value = 'PQ';
                 org.disabled = true;
                 cliente.value = 'Intercompañias DJP';
@@ -1170,7 +1180,7 @@
                 gruposLogistica.forEach(el => { el.style.display = 'none'; el.querySelector('input, select').required = false; });
 
             } else if (esInter && esFase2) {
-                // Preparación visual para crear el pedido "hijo" (Cliente Final)
+                // Fase 2: DJP Vende al cliente (SOBRE LA MISMA FILA)
                 org.value = 'DJP';
                 org.disabled = true;
 
@@ -1184,6 +1194,7 @@
                 gruposLogistica.forEach(el => { el.style.display = 'flex'; el.querySelector('input, select').required = true; });
 
             } else {
+                // Directo
                 org.disabled = false;
                 cliente.value = '';
                 cliente.disabled = false;
@@ -1199,14 +1210,12 @@
             }
         }
 
-        // Esta función ahora prepara el formulario para CREAR la Fase 2 basada en la Fase 1
         function prepararEdicion(filaId) {
             const p = baseDatos.find(i => i.filaId === filaId);
             if (!p) return;
 
-            // Verificamos si realmente es un pedido Intercompañía
             if (p.reqInter !== 'Sí' || p.org !== 'PQ') {
-                mostrarToast('Solo puedes crear la Fase 2 (Cliente Final) a partir de pedidos Intercompañía generados en PQ.', 'warning');
+                mostrarToast('Esta edición en dos Fases es exclusiva para pedidos Intercompañía generados en PQ.', 'warning');
                 return;
             }
 
@@ -1214,20 +1223,23 @@
             ejecutarSwitchTab('tab-nuevo');
 
             document.getElementById('tituloFormulario').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Completar Pedido (Fase 2: Cliente Final)`;
-            document.getElementById('btnSubmitForm').innerText = "💾 Generar Pedido Cliente";
+            document.getElementById('btnSubmitForm').innerText = "💾 Actualizar Fila";
             document.getElementById('btnCancelarEdicion').style.display = "block";
             document.getElementById('btnTabNuevo').innerText = "✏️ Fase 2 Activa...";
 
-            // Marcar que estamos creando la fase 2
+            document.getElementById('filaIdForm').value = p.filaId;
             document.getElementById('esFase2').value = "true";
 
-            document.getElementById('fRegistro').value = new Date().toISOString().split('T')[0]; // Fecha actual para el nuevo pedido
+            document.getElementById('fRegistro').value = p.fechaCreacionISO || new Date().toISOString().split('T')[0];
 
-            // Bloquear datos base heredados
             document.getElementById('material').value = p.material;
             document.getElementById('material').disabled = true;
-            document.getElementById('productoSKU').value = p.productoSKU;
-            document.getElementById('productoSKU').disabled = true;
+            document.getElementById('productoSKUPQ').value = p.productoSKUPQ || "";
+            document.getElementById('productoSKUPQ').disabled = true;
+            document.getElementById('productoSKUDJP').value = p.productoSKUDJP || "";
+            document.getElementById('productoSKUDJP').disabled = true;
+            document.getElementById('alias').value = p.alias || "";
+            document.getElementById('alias').disabled = true;
             document.getElementById('productoNombre').value = p.productoNombre;
             document.getElementById('productoNombre').disabled = true;
             document.getElementById('cantidad').value = p.cantidad;
@@ -1243,24 +1255,29 @@
             document.getElementById('pedInter').value = p.pedInter;
             document.getElementById('pedInter').disabled = true;
 
-            // Llamar a workflow para que muestre los campos de DJP / Cliente
             toggleWorkflow();
 
-            // Limpiar logística por si acaso
-            document.getElementById('fProg').value = "";
-            document.getElementById('origen').value = "Planta";
-            document.getElementById('tEnvio').value = "Propio";
+            document.getElementById('fProg').value = p.fechaProgRaw || "";
+            document.getElementById('origen').value = p.origen || "Planta";
+            document.getElementById('tEnvio').value = p.tipoEnvio || "Propio";
+
+            // Sugerir llenar los campos comerciales si es que ya se había intentado
+            document.getElementById('ocCl').value = p.oc !== "—" ? p.oc : "";
+            document.getElementById('pedCl').value = p.pedido !== "—" ? p.pedido : "";
         }
 
         function resetFormulario() {
             document.getElementById('formPedido').reset();
             document.getElementById('esFase2').value = "false";
+            document.getElementById('filaIdForm').value = "";
             document.getElementById('fRegistro').value = new Date().toISOString().split('T')[0];
 
             document.getElementById('reqInter').disabled = false;
             document.getElementById('material').disabled = false;
             document.getElementById('productoNombre').disabled = false;
-            document.getElementById('productoSKU').disabled = false;
+            document.getElementById('productoSKUPQ').disabled = false;
+            document.getElementById('productoSKUDJP').disabled = false;
+            document.getElementById('alias').disabled = false;
             document.getElementById('cantidad').disabled = false;
             document.getElementById('um').disabled = false;
             document.getElementById('org').disabled = false;
@@ -1283,16 +1300,20 @@
 
             const reqInter = document.getElementById('reqInter').value;
             const esFase2 = document.getElementById('esFase2').value === "true";
+            const filaId = document.getElementById('filaIdForm').value;
 
             let origen = document.getElementById('origen').value;
             let tipoEnvio = document.getElementById('tEnvio').value;
             let fechaProg = document.getElementById('fProg').value;
+            let clienteFinal = document.getElementById('cliente').value;
+            let orgFinal = document.getElementById('org').value;
 
-            // Si es Fase 1 (creando el inter original), borramos logística
+            // Si es Fase 1, limpiamos para la base de datos
             if (reqInter === 'Sí' && !esFase2) {
                 origen = "";
                 tipoEnvio = "";
                 fechaProg = "";
+                clienteFinal = "";
             }
 
             let estatusCalc = "En Proceso";
@@ -1305,13 +1326,15 @@
                 fechaRegistro: document.getElementById('fRegistro').value,
                 ocInter: document.getElementById('ocInter').value,
                 pedidoInter: document.getElementById('pedInter').value,
-                org: document.getElementById('org').value,
-                cliente: document.getElementById('cliente').value,
+                org: orgFinal,
+                cliente: clienteFinal,
                 ocCliente: document.getElementById('ocCl').value,
                 pedidoCliente: document.getElementById('pedCl').value,
                 material: document.getElementById('material').value,
                 productoNombre: document.getElementById('productoNombre').value,
-                productoSKU: document.getElementById('productoSKU').value,
+                productoSKUPQ: document.getElementById('productoSKUPQ').value,
+                productoSKUDJP: document.getElementById('productoSKUDJP').value,
+                alias: document.getElementById('alias').value,
                 cantidad: document.getElementById('cantidad').value,
                 um: document.getElementById('um').value,
                 fechaProg: fechaProg,
@@ -1320,19 +1343,35 @@
                 estatus: estatusCalc
             };
 
-            // En este nuevo flujo, SIEMPRE creamos un registro nuevo.
-            google.script.run
-                .withSuccessHandler(() => {
-                    mostrarToast(esFase2 ? "¡Pedido Fase 2 (Cliente Final) generado exitosamente!" : "¡Pedido Fase 1 registrado exitosamente!");
-                    resetFormulario();
-                    cargarInformacion();
-                    ejecutarSwitchTab('tab-historial');
-                })
-                .withFailureHandler((error) => {
-                    mostrarToast("Error al guardar: " + error.message, 'error');
-                    btn.innerText = "💾 Registrar Movimiento"; btn.disabled = false;
-                })
-                .guardarNuevoPedido(obj);
+            if (filaId !== "" && esFase2) {
+                // ACTUALIZAR (Fase 2)
+                google.script.run
+                    .withSuccessHandler(() => {
+                        mostrarToast("¡Pedido Fase 2 completado exitosamente!");
+                        resetFormulario();
+                        cargarInformacion();
+                        ejecutarSwitchTab('tab-historial');
+                    })
+                    .withFailureHandler((error) => {
+                        mostrarToast("Error: " + error.message, 'error');
+                        btn.innerText = "💾 Actualizar Fila"; btn.disabled = false;
+                    })
+                    .actualizarPedido(parseInt(filaId), obj);
+            } else {
+                // CREAR NUEVO (Fase 1 o Directo)
+                google.script.run
+                    .withSuccessHandler(() => {
+                        mostrarToast("¡Pedido Fase 1 registrado exitosamente!");
+                        resetFormulario();
+                        cargarInformacion();
+                        ejecutarSwitchTab('tab-historial');
+                    })
+                    .withFailureHandler((error) => {
+                        mostrarToast("Error: " + error.message, 'error');
+                        btn.innerText = "💾 Registrar Movimiento"; btn.disabled = false;
+                    })
+                    .guardarNuevoPedido(obj);
+            }
         }
 
         function switchTab(t) {
@@ -1355,19 +1394,30 @@
 
         function cargarInformacion() {
             google.script.run.withSuccessHandler(data => {
+                if (data.error) {
+                    mostrarToast(data.error, 'error');
+                    return;
+                }
+
                 baseDatos = data.historialPedidos;
+                catalogoProductos = data.catalogoProductos;
 
                 const sC = document.getElementById('filtroCliente');
                 const sOrg = document.getElementById('filtroOrg');
                 const sMat = document.getElementById('filtroMaterial');
                 const sProd = document.getElementById('filtroProductoTop');
 
+                // Extraer lista única de productos desde el catalogo para el filtro superior
+                const nombresUnicosCat = Object.keys(catalogoProductos).sort();
+
                 if (sC.options.length === 1) {
                     data.clientesLista.forEach(c => sC.options.add(new Option(c, c)));
                     data.orgsLista.forEach(o => sOrg.options.add(new Option(o, o)));
                     data.materialesLista.forEach(m => sMat.options.add(new Option(m, m)));
-                    data.productosLista.forEach(p => sProd.options.add(new Option(p, p)));
+                    // Llenado dinámico del filtro de Producto usando el catálogo real
+                    nombresUnicosCat.forEach(p => sProd.options.add(new Option(p, p)));
                 }
+                inicializarCatalogo();
                 procesarFiltros();
             }).obtenerMetricasKPIs();
         }
@@ -1430,11 +1480,13 @@
                         String(p.pedido).toLowerCase().includes(busqueda) ||
                         String(p.cliente).toLowerCase().includes(busqueda) ||
                         String(p.productoNombre).toLowerCase().includes(busqueda) ||
-                        String(p.productoSKU).toLowerCase().includes(busqueda) ||
+                        String(p.productoSKUPQ).toLowerCase().includes(busqueda) ||
+                        String(p.productoSKUDJP).toLowerCase().includes(busqueda) ||
+                        String(p.alias).toLowerCase().includes(busqueda) ||
                         String(p.material).toLowerCase().includes(busqueda);
                 }
 
-                return pasaFecha && pasaCli && pasaOrg && pasaMat && pasaProdTop && pasaEstChart && pasaCliChart && pasaOrgChart && pasaMatChart && pasaProdChart && pasaBusqueda;
+                return pasaFecha && pasaCli && pasaOrg && pasaMat && pasaProdTop && pasaEstChart && pasaCliChart && pasaOrgChart && pasaMatChart && pasaProdChart && pasaBusqueda && (p.pedido || p.oc || p.pedInter || p.ocInter);
             });
 
             actualizarKPIsYGraficas(datosFiltrados);
@@ -1611,7 +1663,7 @@
                     <td>${p.pedido || '—'}</td>
                     <td><span style="font-weight:600; color:#0369a1;">${p.org || '—'}</span></td>
                     <td>${p.cliente || '—'}</td>
-                    <td><div style="font-size:11px; color:#64748b;">${p.material || ''}</div>${p.productoNombre || '—'} <br><small style="color:#94a3b8;">${p.productoSKU}</small></td>
+                    <td><div style="font-size:11px; color:#64748b;">${p.material || ''}</div>${p.productoNombre || '—'}<br><small style="color:#94a3b8;">${p.productoSKUPQ} / ${p.productoSKUDJP}</small></td>
                     <td style="font-size:12px; color:#475569;">
                         <div style="color:#94a3b8; font-size:11px;">Prog: ${p.fechaProg}</div>
                         <div style="font-weight:600;">Ent: ${fechaEntStr}</div>
@@ -1630,8 +1682,7 @@
                 <p><strong>Organización:</strong> ${p.org}</p>
                 <p><strong>Cliente:</strong> ${p.cliente}</p>
                 <p><strong>Material:</strong> ${p.material}</p>
-                <p><strong>Producto:</strong> ${p.productoNombre} <br><small>SKU: ${p.productoSKU}</small></p>
-                <p><strong>Volumen:</strong> ${p.cantidad} ${p.um}</p>
+                <p><strong>Producto:</strong> ${p.productoNombre} <br><small>SKU PQ: ${p.productoSKUPQ} | SKU DJP: ${p.productoSKUDJP} <br> Alias: ${p.alias}</small></p>
                 <br>
                 <p><strong>OC Relacionada:</strong> ${p.oc}</p>
                 <p><strong>OC Intercompañía:</strong> ${p.ocInter}</p>

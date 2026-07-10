@@ -6,45 +6,43 @@ function doGet() {
 }
 
 function obtenerMetricasKPIs() {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('MONITOREO DE PEDIDOS');
-    if (!sheet) return { error: "No se encontró la pestaña 'MONITOREO DE PEDIDOS'" };
+    const libro = SpreadsheetApp.getActiveSpreadsheet();
+    const sheetPedidos = libro.getSheetByName('MONITOREO DE PEDIDOS');
+    const sheetProductos = libro.getSheetByName('productos');
 
-    const datos = sheet.getDataRange().getValues();
-    const cabeceras = datos[0].map(c => String(c).trim().toUpperCase());
-    const filas = datos.slice(1);
+    if (!sheetPedidos) return { error: "No se encontró la pestaña 'MONITOREO DE PEDIDOS'" };
 
-    const getIdx = (nombre) => cabeceras.indexOf(nombre);
+    // --- LECTURA DE PEDIDOS ---
+    const datosPedidos = sheetPedidos.getDataRange().getValues();
+    const cabecerasPedidos = datosPedidos[0].map(c => String(c).trim().toUpperCase());
+    const filasPedidos = datosPedidos.slice(1);
+
+    const getIdx = (nombre) => cabecerasPedidos.indexOf(nombre);
 
     const idxOC = getIdx('OC CLIENTE');
     const idxPedido = getIdx('PEDIDO CLIENTE');
     const idxCreacion = getIdx('FECHA CREACIÓN PEDIDO');
-
-    // CAMPOS INTERCOMPAÑIA
     const idxPedidoInter = getIdx('PEDIDO INTER');
     const idxOcInter = getIdx('OC INTER');
-
     const idxOrg = getIdx('ORG');
     const idxCliente = getIdx('CLIENTE');
     const idxMaterial = getIdx('MATERIAL');
-
     const idxSkuPq = getIdx('SKU PQ');
     const idxProducto = getIdx('PRODUCTO');
-
+    const idxAlias = getIdx('ALIAS');
     const idxCantidad = getIdx('CANTIDAD');
     const idxUm = getIdx('UM');
-
     const idxProg = getIdx('ENTREGA PROGRAMADA');
     const idxEntrega = getIdx('FECHA DE ENTREGA');
     const idxEstatus = getIdx('ESTATUS');
     const idxEstatusTiempo = getIdx('ESTATUS DE TIEMPO');
-
     const idxOrigen = getIdx('ORIGEN');
     const idxEnvio = getIdx('TIPO DE ENVIO') !== -1 ? getIdx('TIPO DE ENVIO') : getIdx('TIPO DE ENVÍO');
+    const idxReqInter = getIdx('PEDIDO INTER REQUERIDO');
 
     let ocsTotales = 0, pedidosConvertidos = 0;
     const historialPedidos = [];
     const clientesUnicos = new Set();
-    const productosUnicos = new Set();
     const orgsUnicas = new Set();
     const materialesUnicos = new Set();
 
@@ -60,24 +58,25 @@ function obtenerMetricasKPIs() {
         return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
     };
 
-    filas.forEach((fila, nFila) => {
-        const oc = idxOC !== -1 ? fila[idxOC] : "";
-        const pedido = idxPedido !== -1 ? fila[idxPedido] : "";
-        const pedInter = idxPedidoInter !== -1 ? fila[idxPedidoInter] : "";
-        const ocInter = idxOcInter !== -1 ? fila[idxOcInter] : "";
+    filasPedidos.forEach((fila, nFila) => {
+        const oc = idxOC !== -1 ? String(fila[idxOC]) : "";
+        const pedido = idxPedido !== -1 ? String(fila[idxPedido]) : "";
+        const pedInter = idxPedidoInter !== -1 ? String(fila[idxPedidoInter]) : "";
+        const ocInter = idxOcInter !== -1 ? String(fila[idxOcInter]) : "";
 
-        const org = idxOrg !== -1 ? fila[idxOrg] : "";
-        const cliente = idxCliente !== -1 ? fila[idxCliente] : "";
-        const material = idxMaterial !== -1 ? fila[idxMaterial] : "";
+        const org = idxOrg !== -1 ? String(fila[idxOrg]) : "";
+        const cliente = idxCliente !== -1 ? String(fila[idxCliente]) : "";
+        const material = idxMaterial !== -1 ? String(fila[idxMaterial]) : "";
 
-        const skuPq = idxSkuPq !== -1 ? fila[idxSkuPq] : "";
-        const productoNombre = idxProducto !== -1 ? fila[idxProducto] : "";
+        const skuPq = idxSkuPq !== -1 ? String(fila[idxSkuPq]) : "";
+        const productoNombre = idxProducto !== -1 ? String(fila[idxProducto]) : "";
+        const alias = idxAlias !== -1 ? String(fila[idxAlias]) : "";
 
         const cantidad = idxCantidad !== -1 ? (parseFloat(fila[idxCantidad]) || 0) : 0;
-        const um = idxUm !== -1 ? fila[idxUm] : "";
+        const um = idxUm !== -1 ? String(fila[idxUm]) : "";
 
-        const estatus = idxEstatus !== -1 ? fila[idxEstatus] : "";
-        const estatusTiempo = idxEstatusTiempo !== -1 ? fila[idxEstatusTiempo] : "";
+        const estatus = idxEstatus !== -1 ? String(fila[idxEstatus]) : "";
+        const estatusTiempo = idxEstatusTiempo !== -1 ? String(fila[idxEstatusTiempo]) : "";
 
         if (!oc && !pedido && !pedInter && !ocInter) return;
 
@@ -85,7 +84,6 @@ function obtenerMetricasKPIs() {
         if (pedido || pedInter) {
             pedidosConvertidos++;
             if (cliente) clientesUnicos.add(cliente);
-            if (productoNombre) productosUnicos.add(productoNombre);
             if (org) orgsUnicas.add(org);
             if (material) materialesUnicos.add(material);
         }
@@ -104,8 +102,10 @@ function obtenerMetricasKPIs() {
             ocInter: ocInter || "—",
             cliente, org, material, cantidad, um,
             productoNombre: productoNombre,
-            productoSKU: skuPq,
+            productoSKUPQ: skuPq,
+            alias: alias,
             estadoEntrega,
+            reqInter: idxReqInter !== -1 ? fila[idxReqInter] : "No",
             origen: idxOrigen !== -1 ? fila[idxOrigen] : "",
             tipoEnvio: idxEnvio !== -1 ? fila[idxEnvio] : "",
             fechaCreacionISO: formatoISO(idxCreacion !== -1 ? fila[idxCreacion] : ""),
@@ -116,13 +116,40 @@ function obtenerMetricasKPIs() {
         });
     });
 
+    // --- LECTURA SEGURA DE CATÁLOGO DE PRODUCTOS ---
+    let catalogoProductos = {};
+    if (sheetProductos) {
+        const datosProd = sheetProductos.getDataRange().getValues();
+        if (datosProd.length > 1) {
+            const cabProd = datosProd[0].map(c => String(c).trim().toLowerCase());
+            const filasProd = datosProd.slice(1);
+
+            const idxSkuDjpProd = cabProd.indexOf('sku djp');
+            const idxSkuPqProd = cabProd.indexOf('sku pq');
+            const idxNombreProd = cabProd.indexOf('nombre del producto');
+            const idxAliasProd = cabProd.indexOf('alias');
+
+            filasProd.forEach(fila => {
+                const nombre = idxNombreProd !== -1 ? String(fila[idxNombreProd]).trim() : "";
+                // Solo procesamos la fila si tiene un nombre (ignoramos filas vacías)
+                if (nombre && nombre !== "") {
+                    catalogoProductos[nombre] = {
+                        skuPq: idxSkuPqProd !== -1 ? String(fila[idxSkuPqProd]).trim() : "",
+                        skuDjp: idxSkuDjpProd !== -1 ? String(fila[idxSkuDjpProd]).trim() : "",
+                        alias: idxAliasProd !== -1 ? String(fila[idxAliasProd]).trim() : ""
+                    };
+                }
+            });
+        }
+    }
+
     return {
         tasaConversionOC: ocsTotales > 0 ? ((pedidosConvertidos / ocsTotales) * 100).toFixed(1) : 0,
         historialPedidos,
         clientesLista: Array.from(clientesUnicos),
-        productosLista: Array.from(productosUnicos),
         orgsLista: Array.from(orgsUnicas),
-        materialesLista: Array.from(materialesUnicos)
+        materialesLista: Array.from(materialesUnicos),
+        catalogoProductos: catalogoProductos
     };
 }
 
@@ -149,8 +176,10 @@ function guardarNuevoPedido(objetoPedido) {
             case 'ORG': return objetoPedido.org;
             case 'CLIENTE': return objetoPedido.cliente;
             case 'MATERIAL': return objetoPedido.material;
-            case 'SKU PQ': return objetoPedido.productoSKU;
+            case 'SKU PQ': return objetoPedido.productoSKUPQ;
+            case 'SKU DJP': return objetoPedido.productoSKUDJP;
             case 'PRODUCTO': return objetoPedido.productoNombre;
+            case 'ALIAS': return objetoPedido.alias;
             case 'CANTIDAD': return objetoPedido.cantidad;
             case 'UM': return objetoPedido.um;
             case 'ENTREGA PROGRAMADA': return objetoPedido.fechaProg;
@@ -159,7 +188,7 @@ function guardarNuevoPedido(objetoPedido) {
             case 'TIPO DE ENVIO': return objetoPedido.tipoEnvio;
             case 'ESTATUS': return objetoPedido.estatus;
             case 'ESTATUS DE TIEMPO': return "";
-            case 'PEDIDO INTER REQUERIDO': return objetoPedido.requiereInter; //Añadido para mantener consistencia
+            case 'PEDIDO INTER REQUERIDO': return objetoPedido.requiereInter;
             default: return "";
         }
     });
@@ -174,16 +203,15 @@ function actualizarPedido(filaId, objetoPedido) {
 
     const filaActualizada = cabeceras.map((cabecera, index) => {
         switch (cabecera) {
-            case 'OC CLIENTE': return objetoPedido.ocCliente || filaActual[index];
-            case 'PEDIDO CLIENTE': return objetoPedido.pedidoCliente || filaActual[index];
-            case 'ORG': return objetoPedido.org || filaActual[index];
-            case 'CLIENTE': return objetoPedido.cliente || filaActual[index];
-            case 'ENTREGA PROGRAMADA': return objetoPedido.fechaProg || filaActual[index];
-            case 'FECHA DE ENTREGA': return objetoPedido.fechaEntregaReal || filaActual[index];
-            case 'ORIGEN': return objetoPedido.origen || filaActual[index];
+            case 'ORG': return objetoPedido.org;
+            case 'CLIENTE': return objetoPedido.cliente;
+            case 'OC CLIENTE': return objetoPedido.ocCliente;
+            case 'PEDIDO CLIENTE': return objetoPedido.pedidoCliente;
+            case 'ENTREGA PROGRAMADA': return objetoPedido.fechaProg;
+            case 'ORIGEN': return objetoPedido.origen;
             case 'TIPO DE ENVÍO':
-            case 'TIPO DE ENVIO': return objetoPedido.tipoEnvio || filaActual[index];
-            case 'ESTATUS': return objetoPedido.estatus || filaActual[index];
+            case 'TIPO DE ENVIO': return objetoPedido.tipoEnvio;
+            case 'ESTATUS': return objetoPedido.estatus;
             default: return filaActual[index];
         }
     });
